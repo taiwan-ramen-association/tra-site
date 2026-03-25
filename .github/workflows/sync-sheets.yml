@@ -1,0 +1,63 @@
+name: Sync Google Sheets Data
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 每6小時自動執行一次
+  workflow_dispatch:          # 也可以手動觸發
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Google Sheets data
+        run: |
+          curl -L "https://docs.google.com/spreadsheets/d/1kS00wVDgdg11ejcC85Y4_utJ4jaywgUpb-KrhFIp8Mo/gviz/tq?tqx=out:json&sheet=%E7%B8%BD%E8%A1%A8csv" \
+            -o raw.json
+
+      - name: Convert gviz JSON to clean JSON
+        run: |
+          python3 << 'EOF'
+          import json, re
+
+          with open('raw.json', 'r', encoding='utf-8') as f:
+              text = f.read()
+
+          # Strip gviz wrapper
+          text = re.sub(r'^[^{]*', '', text)
+          text = re.sub(r'\);?\s*$', '', text)
+          data = json.loads(text)
+
+          table  = data['table']
+          headers = [c.get('label') or c.get('id','') for c in table['cols']]
+          headers = [h.strip() for h in headers]
+
+          rows = []
+          for row in table.get('rows', []):
+              if not row.get('c'):
+                  continue
+              obj = {}
+              for i, cell in enumerate(row['c']):
+                  h = headers[i] if i < len(headers) else ''
+                  obj[h] = str(cell['v']).strip() if cell and cell.get('v') is not None else ''
+              if obj.get('店名','').strip():
+                  rows.append(obj)
+
+          with open('data.json', 'w', encoding='utf-8') as f:
+              json.dump(rows, f, ensure_ascii=False, indent=2)
+
+          print(f"Done: {len(rows)} shops saved to data.json")
+          EOF
+
+      - name: Commit and push data.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Auto-sync: $(date '+%Y-%m-%d %H:%M') UTC"
+          git push

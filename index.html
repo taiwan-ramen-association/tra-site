@@ -341,9 +341,8 @@
 
 <script>
 // ── Config ─────────────────────────────────────────────────────────────────
-const SHEET_ID   = '1kS00wVDgdg11ejcC85Y4_utJ4jaywgUpb-KrhFIp8Mo';
-const SHEET_NAME = '總表csv';
-const JSON_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+// 讀同一個 repo 下的 data.json（由 GitHub Actions 自動同步自 Google Sheets）
+const DATA_URL = './data.json';
 
 // ── State ──────────────────────────────────────────────────────────────────
 let ALL_DATA   = [];
@@ -364,24 +363,6 @@ function buildTimeOptions() {
 }
 buildTimeOptions();
 
-// ── Parse gviz JSON ────────────────────────────────────────────────────────
-function parseGviz(text) {
-  const json = text.replace(/^[^{]*/, '').replace(/\);?\s*$/, '');
-  const { table } = JSON.parse(json);
-  const headers = table.cols.map(c => (c.label || c.id).trim());
-  return table.rows
-    .filter(r => r.c)
-    .map(r => {
-      const obj = {};
-      headers.forEach((h, i) => {
-        const cell = r.c[i];
-        obj[h] = (cell && cell.v != null) ? String(cell.v).trim() : '';
-      });
-      return obj;
-    })
-    .filter(r => r['店名']);
-}
-
 // ── Load ───────────────────────────────────────────────────────────────────
 async function loadData() {
   document.getElementById('loadingScreen').style.display = 'flex';
@@ -390,11 +371,11 @@ async function loadData() {
   document.getElementById('refreshBtn').classList.add('spinning');
 
   try {
-    const res  = await fetch(JSON_URL);
+    const res  = await fetch(DATA_URL + '?t=' + Date.now()); // 避免快取
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    ALL_DATA   = parseGviz(text)
-                   .filter(r => r['營業狀態'] === '營業中');
+    const rows = await res.json();
+
+    ALL_DATA = rows.filter(r => r['店名'] && r['店名'].trim() && r['營業狀態'] === '營業中');
 
     // City dropdown
     const cities = [...new Set(ALL_DATA.map(d => d['縣市']).filter(Boolean))].sort();
@@ -407,7 +388,7 @@ async function loadData() {
 
     const now = new Date();
     document.getElementById('lastUpdated').textContent =
-      `即時資料　${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 更新　共 ${ALL_DATA.length} 間`;
+      `資料更新於 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}　共 ${ALL_DATA.length} 間`;
 
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('mainContent').style.display   = 'block';
@@ -497,7 +478,7 @@ function getFiltered() {
     }
 
     if (query) {
-      const hay = [shop['店名'],shop['地址'],shop['派系'],shop['類型'],shop['醬底']].join(' ').toLowerCase();
+      const hay = [shop['店名'],shop['地址'],shop['派系'],shop['類型'],shop['醬底'],shop['備註']].join(' ').toLowerCase();
       if (!hay.includes(query)) return false;
     }
     return true;
@@ -565,6 +546,7 @@ function renderCard(shop) {
     <div class="card-detail">
       ${mapBtn}
       ${detailItems.length ? `<div class="detail-grid">${detailItems.map(d=>`<div><div class="detail-label">${d.l}</div><div class="detail-value">${d.v}</div></div>`).join('')}</div>` : ''}
+      ${shop['備註'] ? `<div class="note-box">${shop['備註'].replace(/\n/g,'<br>')}</div>` : ''}
       ${links.length ? `<div class="link-row">${links.join('')}</div>` : ''}
     </div>
   </div>`;
