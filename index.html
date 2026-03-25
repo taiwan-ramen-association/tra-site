@@ -478,7 +478,7 @@ function getFiltered() {
     }
 
     if (query) {
-      const hay = [shop['店名'],shop['地址'],shop['派系'],shop['類型'],shop['醬底'],shop['備註']].join(' ').toLowerCase();
+      const hay = [shop['店名'],shop['地址'],shop['派系'],shop['類型'],shop['醬底']].join(' ').toLowerCase();
       if (!hay.includes(query)) return false;
     }
     return true;
@@ -546,7 +546,6 @@ function renderCard(shop) {
     <div class="card-detail">
       ${mapBtn}
       ${detailItems.length ? `<div class="detail-grid">${detailItems.map(d=>`<div><div class="detail-label">${d.l}</div><div class="detail-value">${d.v}</div></div>`).join('')}</div>` : ''}
-      ${shop['備註'] ? `<div class="note-box">${shop['備註'].replace(/\n/g,'<br>')}</div>` : ''}
       ${links.length ? `<div class="link-row">${links.join('')}</div>` : ''}
     </div>
   </div>`;
