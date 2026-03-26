@@ -546,6 +546,7 @@ function renderCard(shop) {
     <div class="card-detail">
       ${mapBtn}
       ${detailItems.length ? `<div class="detail-grid">${detailItems.map(d=>`<div><div class="detail-label">${d.l}</div><div class="detail-value">${d.v}</div></div>`).join('')}</div>` : ''}
+      ${shop['營業備註'] ? `<div class="note-box">${shop['營業備註'].replace(/\n/g,'<br>')}</div>` : ''}
       ${links.length ? `<div class="link-row">${links.join('')}</div>` : ''}
     </div>
   </div>`;
