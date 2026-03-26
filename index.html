@@ -277,6 +277,18 @@
 
   #mainContent { display: none; }
 
+  /* ── LOCATE ── */
+  .locate-btn {
+    border: 1.5px solid var(--line); background: var(--paper); color: var(--stone);
+    border-radius: 7px; padding: 5px 10px; font-size: 13px; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; white-space: nowrap;
+  }
+  .locate-btn.located { border-color: #1a73e8; color: #1a73e8; background: #edf3ff; }
+  .dist-badge {
+    font-size: 11px; color: #1a73e8; background: #edf3ff;
+    border-radius: 10px; padding: 1px 7px; font-weight: 500;
+  }
+
   /* ── VIEW TOGGLE ── */
   .result-actions { display: flex; gap: 8px; align-items: center; }
   .view-toggle { display: flex; border: 1.5px solid var(--line); border-radius: 7px; overflow: hidden; }
@@ -355,6 +367,7 @@
   <div class="result-bar">
     <div>共 <strong id="resultCount">0</strong> 間店家</div>
     <div class="result-actions">
+      <button class="locate-btn" id="locateBtn">📍 定位</button>
       <div class="view-toggle">
         <button class="view-btn active" id="viewList">☰ 清單</button>
         <button class="view-btn" id="viewMap">🗺 地圖</button>
@@ -379,6 +392,9 @@ let expandedCard = null;
 let currentView  = 'list';
 let leafletMap   = null;
 let markerLayer  = null;
+let userLat      = null;
+let userLng      = null;
+let userMarker   = null;
 
 // ── Build time options (00:00 ~ 23:30, step 30min) ────────────────────────
 function buildTimeOptions() {
@@ -493,7 +509,7 @@ function getFiltered() {
   const city   = document.getElementById('cityFilter').value;
   const timeVal = document.getElementById('timeFilter').value;
 
-  return ALL_DATA.filter(shop => {
+  const result = ALL_DATA.filter(shop => {
     if (city && shop['縣市'] !== city) return false;
 
     if (selectedDay) {
@@ -513,6 +529,63 @@ function getFiltered() {
       if (!hay.includes(query)) return false;
     }
     return true;
+  });
+
+  if (userLat !== null) {
+    result.sort((a, b) => {
+      const da = shopDist(a) ?? Infinity;
+      const db = shopDist(b) ?? Infinity;
+      return da - db;
+    });
+  }
+  return result;
+}
+
+// ── Geolocation ────────────────────────────────────────────────────────────
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371, toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDist(km) {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+function shopDist(shop) {
+  if (userLat === null || !shop.lat || !shop.lng) return null;
+  return haversine(userLat, userLng, parseFloat(shop.lat), parseFloat(shop.lng));
+}
+
+function showUserMarker() {
+  if (!leafletMap || userLat === null) return;
+  if (userMarker) leafletMap.removeLayer(userMarker);
+  userMarker = L.circleMarker([userLat, userLng], {
+    radius: 8, color: '#fff', weight: 2.5, fillColor: '#1a73e8', fillOpacity: 1
+  }).addTo(leafletMap).bindPopup('你在這裡');
+}
+
+function locateUser() {
+  if (!navigator.geolocation) { alert('此瀏覽器不支援 GPS 定位'); return; }
+  const btn = document.getElementById('locateBtn');
+  btn.textContent = '⏳ 定位中…';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    btn.textContent = '📍 已定位';
+    btn.classList.add('located');
+    btn.disabled = false;
+    if (leafletMap) {
+      showUserMarker();
+      leafletMap.setView([userLat, userLng], 14);
+    }
+    render();
+  }, () => {
+    btn.textContent = '📍 定位';
+    btn.disabled = false;
+    alert('無法取得位置，請確認已允許定位權限');
   });
 }
 
@@ -534,6 +607,7 @@ function initMap() {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(leafletMap);
+  showUserMarker();
 }
 
 function renderMap() {
@@ -593,6 +667,7 @@ function isValidUrl(s) {
 }
 
 function renderCard(shop) {
+  const dist    = shopDist(shop);
   const dayStr  = formatDayStr(shop);
   const hours   = (shop['營業時段'] || '').replace(/\n/g, '　');
   const offDay  = (shop['店休日']   || '').replace(/,/g, '、');
@@ -628,7 +703,10 @@ function renderCard(shop) {
   <div class="card">
     <div class="card-header">
       <div class="card-name">${shop['店名']}</div>
-      ${statusBadge(shop['營業狀態'])}
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+        ${dist !== null ? `<span class="dist-badge">${formatDist(dist)}</span>` : ''}
+        ${statusBadge(shop['營業狀態'])}
+      </div>
     </div>
     <div class="card-meta">
       ${dayStr ? `<div class="meta-row"><span class="meta-icon">📅</span><span class="meta-text">${dayStr}${hours ? '　' + hours : ''}${offDay && offDay !== '無' ? '　休：' + offDay : ''}</span></div>` : ''}
@@ -692,6 +770,7 @@ document.getElementById('timeFilter').addEventListener('change', render);
 document.getElementById('refreshBtn').addEventListener('click', loadData);
 document.getElementById('viewList').addEventListener('click', () => switchView('list'));
 document.getElementById('viewMap').addEventListener('click',  () => switchView('map'));
+document.getElementById('locateBtn').addEventListener('click', locateUser);
 document.getElementById('retryBtn').addEventListener('click', loadData);
 document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
