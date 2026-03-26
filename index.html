@@ -299,6 +299,15 @@
   }
   .view-btn.active { background: var(--red); color: white; }
 
+  .map-locate-btn {
+    width: 34px; height: 34px; border-radius: 6px;
+    border: 2px solid rgba(0,0,0,0.2); background: white;
+    font-size: 17px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+  }
+  .map-locate-btn:active { background: #f0f0f0; }
+
   /* ── MAP ── */
   #mapContainer { display: none; height: calc(100dvh - 270px); min-height: 300px; }
   .leaflet-popup-content-wrapper { border-radius: 10px; font-family: 'Noto Sans TC', sans-serif; }
@@ -607,6 +616,20 @@ function initMap() {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(leafletMap);
+  // 地圖右下角定位按鈕
+  const LocateControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'map-locate-btn');
+      btn.title = '定位到我的位置';
+      btn.innerHTML = '📍';
+      L.DomEvent.on(btn, 'click', L.DomEvent.stop);
+      L.DomEvent.on(btn, 'click', locateUser);
+      return btn;
+    }
+  });
+  new LocateControl().addTo(leafletMap);
+
   showUserMarker();
 }
 
