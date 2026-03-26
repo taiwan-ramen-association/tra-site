@@ -299,14 +299,16 @@
   }
   .view-btn.active { background: var(--red); color: white; }
 
-  .map-locate-btn {
+  .map-ctrl-btn {
     width: 34px; height: 34px; border-radius: 6px;
     border: 2px solid rgba(0,0,0,0.2); background: white;
     font-size: 17px; cursor: pointer; display: flex;
     align-items: center; justify-content: center;
     box-shadow: 0 1px 5px rgba(0,0,0,0.2);
   }
-  .map-locate-btn:active { background: #f0f0f0; }
+  .map-ctrl-btn:active { background: #f0f0f0; }
+  .map-ctrl-btn.following { background: #1a73e8; border-color: #1a73e8; }
+  .map-ctrl-group { display: flex; flex-direction: column; gap: 6px; }
 
   /* ── MAP ── */
   #mapContainer { display: none; height: calc(100dvh - 270px); min-height: 300px; }
@@ -404,6 +406,8 @@ let markerLayer  = null;
 let userLat      = null;
 let userLng      = null;
 let userMarker   = null;
+let watchId      = null;
+let followMode   = false;
 
 // ── Build time options (00:00 ~ 23:30, step 30min) ────────────────────────
 function buildTimeOptions() {
@@ -588,7 +592,7 @@ function locateUser() {
     btn.disabled = false;
     if (leafletMap) {
       showUserMarker();
-      leafletMap.setView([userLat, userLng], 14);
+      leafletMap.setView([userLat, userLng], 15);
     }
     render();
   }, () => {
@@ -596,6 +600,37 @@ function locateUser() {
     btn.disabled = false;
     alert('無法取得位置，請確認已允許定位權限');
   });
+}
+
+function toggleFollow() {
+  if (!navigator.geolocation) { alert('此瀏覽器不支援 GPS 定位'); return; }
+  if (followMode) {
+    // 關閉跟隨
+    navigator.geolocation.clearWatch(watchId);
+    watchId    = null;
+    followMode = false;
+    const btn = document.querySelector('.map-ctrl-btn.following');
+    if (btn) btn.classList.remove('following');
+  } else {
+    // 開啟跟隨
+    followMode = true;
+    const followBtn = document.getElementById('followMapBtn');
+    if (followBtn) followBtn.classList.add('following');
+    watchId = navigator.geolocation.watchPosition(pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      document.getElementById('locateBtn').textContent = '📍 已定位';
+      document.getElementById('locateBtn').classList.add('located');
+      showUserMarker();
+      if (followMode && leafletMap) leafletMap.setView([userLat, userLng]);
+      render();
+    }, () => {
+      followMode = false;
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      const followBtn = document.getElementById('followMapBtn');
+      if (followBtn) followBtn.classList.remove('following');
+    }, { enableHighAccuracy: true });
+  }
 }
 
 // ── Map ────────────────────────────────────────────────────────────────────
@@ -612,23 +647,37 @@ function switchView(v) {
 function initMap() {
   leafletMap  = L.map('mapContainer').setView([23.97, 120.97], 8);
   markerLayer = L.layerGroup().addTo(leafletMap);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 19
   }).addTo(leafletMap);
-  // 地圖右下角定位按鈕
-  const LocateControl = L.Control.extend({
+
+  // 右下角控制組：定位 + 跟隨
+  const MapControls = L.Control.extend({
     options: { position: 'bottomright' },
     onAdd() {
-      const btn = L.DomUtil.create('button', 'map-locate-btn');
-      btn.title = '定位到我的位置';
-      btn.innerHTML = '📍';
-      L.DomEvent.on(btn, 'click', L.DomEvent.stop);
-      L.DomEvent.on(btn, 'click', locateUser);
-      return btn;
+      const wrap = L.DomUtil.create('div', 'map-ctrl-group');
+
+      const locBtn = L.DomUtil.create('button', 'map-ctrl-btn', wrap);
+      locBtn.title = '定位到我的位置';
+      locBtn.innerHTML = '📍';
+      L.DomEvent.on(locBtn, 'click', L.DomEvent.stop);
+      L.DomEvent.on(locBtn, 'click', locateUser);
+
+      const followBtn = L.DomUtil.create('button', 'map-ctrl-btn', wrap);
+      followBtn.id    = 'followMapBtn';
+      followBtn.title = '跟隨我的位置';
+      followBtn.innerHTML = '🧭';
+      L.DomEvent.on(followBtn, 'click', L.DomEvent.stop);
+      L.DomEvent.on(followBtn, 'click', toggleFollow);
+
+      return wrap;
     }
   });
-  new LocateControl().addTo(leafletMap);
+  new MapControls().addTo(leafletMap);
+
+  // 手動拖曳地圖時退出跟隨模式
+  leafletMap.on('dragstart', () => { if (followMode) toggleFollow(); });
 
   showUserMarker();
 }
