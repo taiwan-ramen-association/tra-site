@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最新消息 | 台灣拉麵協會</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:   #C8272D;
+      --ink:   #1A1A1A;
+      --paper: #FAFAF8;
+      --line:  #E0DAD0;
+      --muted: #6B6560;
+      --white: #FFFFFF;
+    }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); font-weight: 300; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 64px;
+      background: rgba(250,250,248,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-family: 'Noto Serif TC', serif; font-size: 15px; font-weight: 900; letter-spacing: 3px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--red); }
+    .nav-back { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-back:hover { color: var(--red); }
+
+    main { max-width: 800px; margin: 0 auto; padding: 80px 24px 120px; }
+
+    .page-label { font-size: 10px; letter-spacing: 5px; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--red); }
+    .page-title { font-family: 'Noto Serif TC', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: 0.06em; margin-bottom: 56px; }
+
+    .news-list { list-style: none; }
+    .news-item {
+      display: grid;
+      grid-template-columns: 110px auto 1fr;
+      gap: 24px;
+      align-items: center;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--line);
+      text-decoration: none;
+      color: inherit;
+    }
+    .news-item:first-child { border-top: 1px solid var(--line); }
+    .news-item.has-link { transition: opacity 0.2s; cursor: pointer; }
+    .news-item.has-link:hover { opacity: 0.6; }
+    .news-item.no-link { cursor: default; }
+    .news-date { font-size: 11px; letter-spacing: 1px; color: var(--muted); }
+    .news-tag {
+      display: inline-block; font-size: 9px; letter-spacing: 2px;
+      color: var(--red); border: 1px solid var(--red);
+      padding: 2px 8px; white-space: nowrap;
+    }
+    .news-title { font-size: 14px; letter-spacing: 1px; line-height: 1.6; }
+    .news-arrow { font-size: 14px; color: var(--muted); margin-left: auto; padding-left: 16px; }
+
+    #status { font-size: 13px; color: var(--muted); letter-spacing: 1px; padding: 40px 0; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      main { padding: 60px 20px 80px; }
+      .news-item { grid-template-columns: 1fr; gap: 8px; }
+      .news-date { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">台灣<span>拉麵</span>協會</a>
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+  </nav>
+
+  <main>
+    <p class="page-label">NEWS</p>
+    <h1 class="page-title">最新消息</h1>
+    <p id="status">載入中…</p>
+    <ul class="news-list" id="list"></ul>
+  </main>
+
+  <script>
+    fetch('news.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('status').remove();
+        const list = document.getElementById('list');
+        data.forEach(item => {
+          const li = document.createElement('li');
+          const hasLink = !!item.url;
+          const tag = `<span class="news-date">${item.date}</span>
+            <span class="news-tag">${item.tag}</span>
+            <span class="news-title">${item.title}</span>
+            ${hasLink ? '<span class="news-arrow">↗</span>' : ''}`;
+
+          if (hasLink) {
+            li.innerHTML = `<a class="news-item has-link" href="${item.url}" target="_blank" rel="noopener">${tag}</a>`;
+          } else {
+            li.innerHTML = `<div class="news-item no-link">${tag}</div>`;
+          }
+          list.appendChild(li);
+        });
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = '載入失敗，請稍後再試。';
+      });
+  </script>
+</body>
+</html>

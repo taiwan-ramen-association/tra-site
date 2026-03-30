@@ -618,6 +618,18 @@
       letter-spacing: 1px;
     }
 
+    .news-more {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--red);
+      text-decoration: none;
+      border-bottom: 1px solid var(--red);
+      padding-bottom: 2px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .news-more:hover { opacity: 0.6; }
+
     /* ── MOBILE ── */
     @media (max-width: 768px) {
       nav { padding: 0 20px; }
@@ -642,7 +654,7 @@
     <a href="#" class="nav-logo">台灣<span>拉麵</span>協會</a>
     <ul class="nav-links">
       <li><a href="about.html" data-i18n="nav_about">關於協會</a></li>
-      <li><a href="#news"    data-i18n="nav_news">最新消息</a></li>
+      <li><a href="news.html" data-i18n="nav_news">最新消息</a></li>
       <li><a href="#" onclick="openFinder();return false;" data-i18n="nav_finder">拉麵搜尋</a></li>
       <li><a href="#join"    data-i18n="nav_join">加入會員</a></li>
       <li><a href="meetings.html" data-i18n="nav_minutes">會議紀錄</a></li>
@@ -662,7 +674,7 @@
   <!-- MOBILE MENU -->
   <div class="mobile-menu" id="mobile-menu">
     <a href="about.html" data-i18n="nav_about">關於協會</a>
-    <a href="#news"    onclick="closeMenu()" data-i18n="nav_news">最新消息</a>
+    <a href="news.html" data-i18n="nav_news">最新消息</a>
     <a href="#"        onclick="openFinder();closeMenu();return false;" data-i18n="nav_finder">拉麵搜尋</a>
     <a href="#join"    onclick="closeMenu()" data-i18n="nav_join">加入會員</a>
     <a href="meetings.html" data-i18n="nav_minutes">會議紀錄</a>
@@ -723,37 +735,14 @@
 
   <!-- NEWS -->
   <section id="news">
-    <p class="section-label" data-i18n="news_label">LATEST NEWS</p>
-    <h2 class="section-title" data-i18n="news_title">最新消息</h2>
-    <ul class="news-list">
-      <li>
-        <a href="#" class="news-item">
-          <span class="news-date">2026.03.30</span>
-          <div>
-            <span class="news-tag" data-i18n="tag_announce">公告</span>
-            <p class="news-title-text" data-i18n="news1">協會官方網站正式上線</p>
-          </div>
-        </a>
-      </li>
-      <li>
-        <a href="#" class="news-item">
-          <span class="news-date">2026.03.15</span>
-          <div>
-            <span class="news-tag" data-i18n="tag_data">資料更新</span>
-            <p class="news-title-text" data-i18n="news2">拉麵搜尋器店家資料更新，新增多間北部新店</p>
-          </div>
-        </a>
-      </li>
-      <li>
-        <a href="#" class="news-item">
-          <span class="news-date">2026.02.01</span>
-          <div>
-            <span class="news-tag" data-i18n="tag_event">活動</span>
-            <p class="news-title-text" data-i18n="news3">2026 年春季拉麵業界交流活動報名開始</p>
-          </div>
-        </a>
-      </li>
-    </ul>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:56px;">
+      <div>
+        <p class="section-label" data-i18n="news_label">LATEST NEWS</p>
+        <h2 class="section-title" style="margin-bottom:0" data-i18n="news_title">最新消息</h2>
+      </div>
+      <a href="news.html" class="news-more" data-i18n="news_more">看更多 →</a>
+    </div>
+    <ul class="news-list" id="home-news-list"></ul>
   </section>
 
   <div class="divider"></div>
@@ -903,6 +892,30 @@
       document.body.style.overflow = '';
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFinder(); });
+
+    // ── HOME NEWS ──
+    fetch('news.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        const list = document.getElementById('home-news-list');
+        if (!list) return;
+        data.slice(0, 3).forEach(item => {
+          const li = document.createElement('li');
+          const hasLink = !!item.url;
+          const inner = `
+            <span class="news-date">${item.date}</span>
+            <div>
+              <span class="news-tag">${item.tag}</span>
+              <p class="news-title-text">${item.title}</p>
+            </div>`;
+          if (hasLink) {
+            li.innerHTML = `<a class="news-item" href="${item.url}" target="_blank" rel="noopener">${inner}</a>`;
+          } else {
+            li.innerHTML = `<div class="news-item" style="cursor:default;">${inner}</div>`;
+          }
+          list.appendChild(li);
+        });
+      });
 
     // ── HAMBURGER ──
     function toggleMenu() {
