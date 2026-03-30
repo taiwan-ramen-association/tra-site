@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>協會章程 | 台灣拉麵協會</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:   #C8272D;
+      --ink:   #1A1A1A;
+      --paper: #FAFAF8;
+      --line:  #E0DAD0;
+      --muted: #6B6560;
+      --white: #FFFFFF;
+    }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); font-weight: 300; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 64px;
+      background: rgba(250,250,248,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-family: 'Noto Serif TC', serif; font-size: 15px; font-weight: 900; letter-spacing: 3px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--red); }
+    .nav-back { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-back:hover { color: var(--red); }
+
+    main { max-width: 800px; margin: 0 auto; padding: 80px 24px 120px; }
+
+    .page-label { font-size: 10px; letter-spacing: 5px; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--red); }
+    .page-title { font-family: 'Noto Serif TC', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .page-approved { font-size: 11px; letter-spacing: 1px; color: var(--muted); margin-bottom: 64px; }
+
+    .chapter { margin-bottom: 64px; }
+    .chapter-header {
+      display: flex; align-items: baseline; gap: 16px;
+      border-bottom: 2px solid var(--ink); padding-bottom: 16px; margin-bottom: 32px;
+    }
+    .chapter-num { font-size: 10px; letter-spacing: 4px; color: var(--red); }
+    .chapter-title { font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 900; letter-spacing: 3px; }
+
+    .article { display: grid; grid-template-columns: 60px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+    .article-num { font-size: 12px; letter-spacing: 1px; color: var(--red); padding-top: 2px; white-space: nowrap; }
+    .article-body { font-size: 13.5px; line-height: 2; color: var(--muted); }
+    .article-intro { margin-bottom: 12px; }
+    .article-items { list-style: none; padding-left: 0; }
+    .article-items li { padding: 6px 0 6px 20px; position: relative; line-height: 1.9; }
+    .article-items li::before { content: attr(data-num); position: absolute; left: 0; color: var(--red); font-size: 12px; }
+    .article-note { margin-top: 12px; padding: 12px 16px; border-left: 2px solid var(--line); font-size: 12.5px; color: var(--muted); line-height: 1.9; }
+    .article-content { white-space: pre-line; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      main { padding: 60px 20px 80px; }
+      .article { grid-template-columns: 48px 1fr; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">台灣<span>拉麵</span>協會</a>
+    <a href="about.html" class="nav-back">← 關於協會</a>
+  </nav>
+
+  <main>
+    <p class="page-label">CHARTER</p>
+    <h1 class="page-title" id="charter-title">台灣拉麵協會章程</h1>
+    <p class="page-approved" id="charter-approved"></p>
+    <div id="charter-body"></div>
+  </main>
+
+  <script>
+    const CJK_NUMS = ['一','二','三','四','五','六','七','八','九','十'];
+
+    fetch('charter.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('charter-title').textContent = data.title;
+        document.getElementById('charter-approved').textContent = data.approved;
+
+        const body = document.getElementById('charter-body');
+        data.chapters.forEach(ch => {
+          const section = document.createElement('div');
+          section.className = 'chapter';
+          section.innerHTML = `<div class="chapter-header">
+            <span class="chapter-num">${ch.number}</span>
+            <span class="chapter-title">${ch.title}</span>
+          </div>`;
+
+          ch.articles.forEach(art => {
+            const row = document.createElement('div');
+            row.className = 'article';
+            row.innerHTML = `<div class="article-num">第${art.number}條</div><div class="article-body"></div>`;
+            const artBody = row.querySelector('.article-body');
+
+            if (art.intro) {
+              artBody.innerHTML += `<div class="article-intro">${art.intro}</div>`;
+            }
+            if (art.items) {
+              const ul = document.createElement('ul');
+              ul.className = 'article-items';
+              art.items.forEach((item, i) => {
+                const li = document.createElement('li');
+                li.setAttribute('data-num', CJK_NUMS[i] + '、');
+                li.textContent = item;
+                ul.appendChild(li);
+              });
+              artBody.appendChild(ul);
+            }
+            if (art.note) {
+              artBody.innerHTML += `<div class="article-note">${art.note}</div>`;
+            }
+            if (art.content) {
+              artBody.innerHTML += `<div class="article-content">${art.content}</div>`;
+            }
+
+            section.appendChild(row);
+          });
+          body.appendChild(section);
+        });
+      });
+  </script>
+</body>
+</html>
