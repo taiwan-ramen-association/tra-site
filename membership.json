@@ -1,0 +1,64 @@
+{
+  "intro": "台灣拉麵協會歡迎所有熱愛拉麵文化的個人與團體加入。會員除享有協會各項服務外，未來亦將提供數位平台專屬功能（如即時店家資訊等進階服務）。",
+  "apply_note": "填具入會申請書，經理事會審查通過並繳納會費後，正式取得會員資格。",
+  "tiers": [
+    {
+      "id": "individual",
+      "name": "個人會員",
+      "tag": "INDIVIDUAL",
+      "entry_fee": 800,
+      "annual_fee": 500,
+      "featured": false,
+      "description": "凡贊同本會宗旨、具有餐飲經歷相關資格（或投入熱忱者），皆可申請加入。",
+      "features": [
+        "拉麵店家搜尋器完整使用",
+        "協會會員活動參與資格",
+        "協會電子報訂閱",
+        "未來會員限定功能優先體驗"
+      ]
+    },
+    {
+      "id": "group",
+      "name": "團體會員",
+      "tag": "GROUP",
+      "entry_fee": 1500,
+      "annual_fee": 1000,
+      "featured": true,
+      "description": "凡贊同本會宗旨之機構或團體，入會後可推派代表2人，行使完整會員權利。",
+      "features": [
+        "所有個人會員功能",
+        "兩位代表享有完整會員權利",
+        "業界交流活動優先報名",
+        "協會合作夥伴露出機會"
+      ]
+    },
+    {
+      "id": "sponsor",
+      "name": "贊助會員",
+      "tag": "SPONSOR",
+      "entry_fee": null,
+      "annual_fee": null,
+      "featured": false,
+      "description": "凡贊同本會宗旨且贊助本會經費、資源之個人或團體，經理事會審查通過後取得資格。",
+      "features": [
+        "協會活動贊助商曝光",
+        "業界交流活動邀請",
+        "協會認可之贊助夥伴標章"
+      ]
+    },
+    {
+      "id": "honorary",
+      "name": "榮譽會員",
+      "tag": "HONORARY",
+      "entry_fee": null,
+      "annual_fee": null,
+      "featured": false,
+      "description": "在拉麵文化、技術推廣、研究或相關領域具有卓越貢獻，經理事會推薦或核准者授予。",
+      "features": [
+        "免繳入會費及常年會費",
+        "協會最高榮譽肯定",
+        "業界交流活動邀請"
+      ]
+    }
+  ]
+}

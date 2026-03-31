@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>加入會員 | 台灣拉麵協會</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:   #C8272D;
+      --ink:   #1A1A1A;
+      --paper: #FAFAF8;
+      --line:  #E0DAD0;
+      --muted: #6B6560;
+      --white: #FFFFFF;
+    }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); font-weight: 300; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 64px;
+      background: rgba(250,250,248,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-family: 'Noto Serif TC', serif; font-size: 15px; font-weight: 900; letter-spacing: 3px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--red); }
+    .nav-back { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-back:hover { color: var(--red); }
+
+    main { max-width: 960px; margin: 0 auto; padding: 80px 24px 120px; }
+
+    .page-label { font-size: 10px; letter-spacing: 5px; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--red); }
+    .page-title { font-family: 'Noto Serif TC', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: 0.06em; margin-bottom: 16px; }
+    .page-intro { font-size: 14px; line-height: 2.2; color: var(--muted); max-width: 640px; margin-bottom: 64px; }
+
+    /* Future feature notice */
+    .feature-notice {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--white); border: 1px solid var(--line);
+      border-left: 3px solid var(--red);
+      padding: 20px 24px; margin-bottom: 64px;
+      font-size: 13px; line-height: 1.8; color: var(--muted);
+    }
+    .feature-notice-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Tier grid */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--line);
+      margin-bottom: 64px;
+    }
+    .tier-card { background: var(--paper); padding: 40px 32px; }
+    .tier-card.featured { background: var(--ink); color: var(--white); }
+    .tier-tag { font-size: 9px; letter-spacing: 4px; color: var(--muted); margin-bottom: 12px; }
+    .tier-card.featured .tier-tag { color: rgba(255,255,255,0.4); }
+    .tier-name { font-family: 'Noto Serif TC', serif; font-size: 24px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; }
+    .tier-fee { margin-bottom: 20px; }
+    .tier-fee-amount { font-size: 13px; color: var(--red); letter-spacing: 1px; }
+    .tier-card.featured .tier-fee-amount { color: rgba(200,39,45,0.85); }
+    .tier-desc { font-size: 12.5px; line-height: 1.9; color: var(--muted); margin-bottom: 24px; border-top: 1px solid var(--line); padding-top: 20px; }
+    .tier-card.featured .tier-desc { color: rgba(255,255,255,0.5); border-top-color: rgba(255,255,255,0.1); }
+    .tier-features { list-style: none; margin-bottom: 32px; }
+    .tier-features li { font-size: 12.5px; padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+    .tier-card.featured .tier-features li { border-bottom-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); }
+    .tier-features li::before { content: '✓ '; color: var(--red); }
+    .tier-card.featured .tier-features li::before { color: rgba(200,39,45,0.8); }
+
+    /* Apply section */
+    .apply-section { background: var(--ink); color: var(--white); padding: 56px; }
+    .apply-title { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 16px; }
+    .apply-note { font-size: 13px; line-height: 2; color: rgba(255,255,255,0.5); max-width: 560px; margin-bottom: 32px; }
+    .btn-apply {
+      display: inline-block; font-size: 12px; letter-spacing: 3px;
+      color: var(--white); border: 1px solid rgba(255,255,255,0.4);
+      padding: 14px 36px; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-apply:hover { background: var(--red); border-color: var(--red); }
+
+    @media (max-width: 700px) {
+      nav { padding: 0 20px; }
+      main { padding: 60px 20px 80px; }
+      .tier-grid { grid-template-columns: 1fr; }
+      .apply-section { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="nav-logo">台灣<span>拉麵</span>協會</a>
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+  </nav>
+
+  <main>
+    <p class="page-label">MEMBERSHIP</p>
+    <h1 class="page-title">加入會員</h1>
+    <p class="page-intro" id="page-intro"></p>
+
+    <div class="feature-notice">
+      <span class="feature-notice-icon">🔒</span>
+      <span>會員將享有數位平台專屬功能，包括即時店家資訊、排隊人數等進階服務（開發中，敬請期待）。非會員可免費使用基本拉麵搜尋器。</span>
+    </div>
+
+    <div class="tier-grid" id="tier-grid"></div>
+  </main>
+
+  <div class="apply-section" style="max-width:960px;margin:0 auto;">
+    <div class="apply-title">申請入會</div>
+    <p class="apply-note" id="apply-note"></p>
+    <a href="mailto:taiwan.ramen.association@gmail.com" class="btn-apply">來信申請 →</a>
+  </div>
+
+  <script>
+    fetch('membership.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('page-intro').textContent = data.intro;
+        document.getElementById('apply-note').textContent = data.apply_note;
+
+        const grid = document.getElementById('tier-grid');
+        data.tiers.forEach(tier => {
+          const card = document.createElement('div');
+          card.className = 'tier-card' + (tier.featured ? ' featured' : '');
+
+          let feeHtml = '';
+          if (tier.entry_fee !== null) {
+            feeHtml = `<div class="tier-fee">
+              <span class="tier-fee-amount">入會費 NT$${tier.entry_fee.toLocaleString()} ／ 常年費 NT$${tier.annual_fee.toLocaleString()}</span>
+            </div>`;
+          } else {
+            feeHtml = `<div class="tier-fee"><span class="tier-fee-amount">免繳會費</span></div>`;
+          }
+
+          card.innerHTML = `
+            <div class="tier-tag">${tier.tag}</div>
+            <div class="tier-name">${tier.name}</div>
+            ${feeHtml}
+            <div class="tier-desc">${tier.description}</div>
+            <ul class="tier-features">
+              ${tier.features.map(f => `<li>${f}</li>`).join('')}
+            </ul>`;
+          grid.appendChild(card);
+        });
+      });
+  </script>
+</body>
+</html>
