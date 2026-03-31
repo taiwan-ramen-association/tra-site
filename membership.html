@@ -71,6 +71,20 @@
     .tier-features li::before { content: '✓ '; color: var(--red); }
     .tier-card.featured .tier-features li::before { color: rgba(200,39,45,0.8); }
 
+    .btn-apply-form {
+      display: inline-block; font-size: 11px; letter-spacing: 2px;
+      color: var(--red); border: 1px solid var(--red);
+      padding: 10px 20px; text-decoration: none; margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn-apply-form:hover { background: var(--red); color: var(--white); }
+    .tier-card.featured .btn-apply-form {
+      color: var(--white); border-color: rgba(255,255,255,0.4);
+    }
+    .tier-card.featured .btn-apply-form:hover {
+      background: var(--red); border-color: var(--red);
+    }
+
     /* Apply section */
     .apply-section { background: var(--ink); color: var(--white); padding: 56px; }
     .apply-title { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; margin-bottom: 16px; }
@@ -136,6 +150,10 @@
             feeHtml = `<div class="tier-fee"><span class="tier-fee-amount">免繳會費</span></div>`;
           }
 
+          const applyBtn = tier.apply_url
+            ? `<a class="btn-apply-form" href="${tier.apply_url}" target="_blank" rel="noopener">入會申請書 ↗</a>`
+            : '';
+
           card.innerHTML = `
             <div class="tier-tag">${tier.tag}</div>
             <div class="tier-name">${tier.name}</div>
@@ -143,7 +161,8 @@
             <div class="tier-desc">${tier.description}</div>
             <ul class="tier-features">
               ${tier.features.map(f => `<li>${f}</li>`).join('')}
-            </ul>`;
+            </ul>
+            ${applyBtn}`;
           grid.appendChild(card);
         });
       });
