@@ -9,34 +9,9 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6476285123291834" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --red:   #C8272D;
-      --ink:   #1A1A1A;
-      --paper: #FAFAF8;
-      --line:  #E0DAD0;
-      --muted: #6B6560;
-      --white: #FFFFFF;
-    }
-    body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); font-weight: 300; }
-
-    nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 48px; height: 64px;
-      background: rgba(250,250,248,0.95); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--line);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .nav-logo { font-family: 'Noto Serif TC', serif; font-size: 15px; font-weight: 900; letter-spacing: 3px; color: var(--ink); text-decoration: none; }
-    .nav-logo span { color: var(--red); }
-    .nav-back { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
-    .nav-back:hover { color: var(--red); }
-
     main { max-width: 960px; margin: 0 auto; padding: 80px 24px 120px; }
-
-    .page-label { font-size: 10px; letter-spacing: 5px; color: var(--red); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
-    .page-label::before { content: ''; display: inline-block; width: 24px; height: 1px; background: var(--red); }
     .page-title { font-family: 'Noto Serif TC', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: 0.06em; margin-bottom: 16px; }
     .page-intro { font-size: 14px; line-height: 2.2; color: var(--muted); max-width: 640px; margin-bottom: 64px; }
 
@@ -100,7 +75,6 @@
     .btn-apply:hover { background: var(--red); border-color: var(--red); }
 
     @media (max-width: 700px) {
-      nav { padding: 0 20px; }
       main { padding: 60px 20px 80px; }
       .tier-grid { grid-template-columns: 1fr; }
       .apply-section { padding: 40px 24px; }
