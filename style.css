@@ -149,6 +149,13 @@ nav {
   background: var(--red);
 }
 
+/* ── SCROLL LOCK (iOS fix) ── */
+body.scroll-locked {
+  position: fixed;
+  width: 100%;
+  overflow-y: scroll; /* 桌機保留 scrollbar 位置，避免版面位移 */
+}
+
 /* ── MOBILE NAV ── */
 @media (max-width: 768px) {
   nav { padding: 0 20px; }

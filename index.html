@@ -895,6 +895,20 @@
   </div>
 
   <script>
+    // ── SCROLL LOCK (iOS / Android fix) ──
+    function lockScroll() {
+      const y = window.scrollY;
+      document.body.dataset.scrollY = y;
+      document.body.style.top = `-${y}px`;
+      document.body.classList.add('scroll-locked');
+    }
+    function unlockScroll() {
+      const y = parseInt(document.body.dataset.scrollY || 0);
+      document.body.classList.remove('scroll-locked');
+      document.body.style.top = '';
+      window.scrollTo(0, y);
+    }
+
     // ── DAILY ANNOUNCE ──
     (function() {
       const key = 'tra_announce_date';
@@ -904,7 +918,7 @@
 
       // 顯示 overlay
       document.getElementById('announce-overlay').classList.add('open');
-      document.body.style.overflow = 'hidden';
+      lockScroll();
 
       // 載入 news.json 填入最新消息
       fetch('news.json?t=' + Date.now())
@@ -965,7 +979,7 @@
       const today = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' });
       localStorage.setItem('tra_announce_date', today);
       document.getElementById('announce-overlay').classList.remove('open');
-      document.body.style.overflow = '';
+      unlockScroll();
     }
 
     // ── APRIL FOOLS: 4/2 00:00 UTC+8 自動關閉 ──
@@ -987,11 +1001,11 @@
       const frame = document.getElementById('finder-frame');
       if (!frame.getAttribute('src')) frame.setAttribute('src', 'finder.html');
       overlay.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      lockScroll();
     }
     function closeFinder() {
       document.getElementById('finder-overlay').classList.remove('open');
-      document.body.style.overflow = '';
+      unlockScroll();
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFinder(); });
 
