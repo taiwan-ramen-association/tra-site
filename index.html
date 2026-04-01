@@ -555,24 +555,56 @@
     }
 
     /* ── PARTNERS ── */
+    .partners-cat {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .partners-cat + .partners-cat { margin-top: 32px; }
     .partners-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
       gap: 1px;
       background: var(--line);
+      margin-bottom: 2px;
     }
+    .partners-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .partners-grid-3 { grid-template-columns: repeat(3, 1fr); }
     .partner-slot {
       background: var(--paper);
       aspect-ratio: 2/1;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 16px;
+      transition: opacity 0.2s;
+    }
+    .partner-slot:hover { opacity: 0.7; }
+    .partner-slot img { max-height: 80px; max-width: 100%; width: auto; object-fit: contain; }
+    .partner-slot--member { background: var(--white); outline: 2px solid var(--red); outline-offset: -2px; }
+    .partner-member-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: var(--white);
+      background: var(--red);
+      padding: 2px 5px;
+      pointer-events: none;
+    }
+    .partner-slot { position: relative; }
+    .partners-more {
       font-size: 11px;
       letter-spacing: 2px;
-      color: var(--line);
-      transition: color 0.2s;
+      color: var(--red);
+      text-decoration: none;
+      border-bottom: 1px solid var(--red);
+      padding-bottom: 2px;
+      margin-top: 24px;
+      display: inline-block;
+      transition: opacity 0.2s;
     }
-    .partner-slot:hover { color: var(--muted); }
+    .partners-more:hover { opacity: 0.6; }
 
     /* ── INSTAGRAM ── */
     .ig-section { background: var(--white); }
@@ -691,7 +723,8 @@
       .hero-bg-kanji { display: none; }
       .about-grid { grid-template-columns: 1fr; gap: 48px; }
       .membership-grid { grid-template-columns: 1fr; }
-      .partners-grid { grid-template-columns: repeat(3, 1fr); }
+      .partners-grid-4, .partners-grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .partners-more { margin-top: 16px; }
       .ig-grid { grid-template-columns: repeat(2, 1fr); }
       .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
     }
@@ -861,13 +894,8 @@
   <section id="partners">
     <p class="section-label" data-i18n="partners_label">PARTNERS</p>
     <h2 class="section-title" data-i18n="partners_title">合作夥伴</h2>
-    <div class="partners-grid">
-      <div class="partner-slot">LOGO</div>
-      <div class="partner-slot">LOGO</div>
-      <div class="partner-slot">LOGO</div>
-      <div class="partner-slot">LOGO</div>
-      <div class="partner-slot">LOGO</div>
-    </div>
+    <div id="partners-index"></div>
+    <a href="partners.html" class="partners-more">查看全部合作夥伴 →</a>
   </section>
 
   <div class="divider"></div>
@@ -1087,6 +1115,46 @@
             li.innerHTML = `<div class="news-item" style="cursor:default;">${inner}</div>`;
           }
           list.appendChild(li);
+        });
+      });
+
+    // ── HOME PARTNERS ──
+    fetch('partners.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('partners-index');
+        if (!container) return;
+        const featured = data.filter(p => p.featured).slice(0, 8);
+        const groups = {};
+        featured.forEach(p => {
+          if (!groups[p.category]) groups[p.category] = [];
+          groups[p.category].push(p);
+        });
+        const cats = [
+          { key: 'member',  label: '協會會員店家',  isMember: true  },
+          { key: 'ramen',   label: '合作拉麵店',    isMember: false },
+          { key: 'partner', label: '合作商家',      isMember: false }
+        ];
+        cats.forEach(cat => {
+          const items = groups[cat.key];
+          if (!items || !items.length) return;
+          const colClass = items.length <= 3 ? 'partners-grid-3' : 'partners-grid-4';
+          const catEl = document.createElement('p');
+          catEl.className = 'partners-cat';
+          catEl.textContent = cat.label;
+          container.appendChild(catEl);
+          const grid = document.createElement('div');
+          grid.className = `partners-grid ${colClass}`;
+          items.forEach(p => {
+            const slot = document.createElement('div');
+            slot.className = 'partner-slot' + (cat.isMember ? ' partner-slot--member' : '');
+            const badge = cat.isMember ? '<span class="partner-member-badge">MEMBER</span>' : '';
+            slot.innerHTML = badge + (p.url
+              ? `<a href="${p.url}" target="_blank" rel="noopener"><img src="${p.logo}" alt="${p.name}"></a>`
+              : `<img src="${p.logo}" alt="${p.name}">`);
+            grid.appendChild(slot);
+          });
+          container.appendChild(grid);
         });
       });
 

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "麒麟創作拉麵坊",
+    "category": "member",
+    "logo": "icon/rs_01.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "古流拉麵",
+    "category": "ramen",
+    "logo": "icon/rs_02.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "懸日拉麵",
+    "category": "ramen",
+    "logo": "icon/rs_03.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "茶悟拉麵",
+    "category": "ramen",
+    "logo": "icon/rs_04.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "滿森農場",
+    "category": "partner",
+    "logo": "icon/s_01.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "Quake Farm 橋頭地瓜",
+    "category": "partner",
+    "logo": "icon/s_02.png",
+    "url": null,
+    "featured": true
+  },
+  {
+    "name": "綠光農園",
+    "category": "partner",
+    "logo": "icon/s_03.png",
+    "url": null,
+    "featured": true
+  }
+]
