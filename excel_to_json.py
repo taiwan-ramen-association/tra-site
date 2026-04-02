@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import subprocess
 import sys
 
@@ -16,11 +15,27 @@ except ImportError:
     import openpyxl
 
 # ── 地址解析 ──────────────────────────────────────────────────────────────────
+def _load_districts():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'districts.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+_DISTRICTS = _load_districts()
+
 def parse_city_district(addr):
-    """從地址拆出縣市與鄉鎮市區，例：臺北市士林區大北路9號 → ('臺北市', '士林區')"""
-    m = re.match(r'^(.{2,3}[市縣])(.{1,4}?[區市鎮鄉])(?![區市鎮鄉])', addr)
-    if m:
-        return m.group(1), m.group(2)
+    """從地址拆出縣市與鄉鎮市區（比對內政部官方清單）"""
+    if not addr or not _DISTRICTS:
+        return '', ''
+    addr_n = addr.replace('台', '臺')
+    for county, towns in _DISTRICTS.items():
+        if addr_n.startswith(county):
+            rest = addr_n[len(county):]
+            for town in towns:
+                if rest.startswith(town):
+                    return county, town
     return '', ''
 
 # ── 路徑設定 ──────────────────────────────────────────────────────────────────

@@ -60,11 +60,23 @@ jobs:
                   if k in row:
                       row[k] = fix_date(row[k])
 
-          # 自動從地址解析縣市與鄉鎮市區
+          # 自動從地址解析縣市與鄉鎮市區（比對內政部官方清單）
+          try:
+              with open('districts.json', 'r', encoding='utf-8') as f:
+                  _districts = json.load(f)
+          except FileNotFoundError:
+              _districts = {}
+
           def parse_city_district(addr):
-              m = re.match(r'^(.{2,3}[市縣])(.{1,4}?[區市鎮鄉])(?![區市鎮鄉])', addr)
-              if m:
-                  return m.group(1), m.group(2)
+              if not addr or not _districts:
+                  return '', ''
+              addr_n = addr.replace('台', '臺')
+              for county, towns in _districts.items():
+                  if addr_n.startswith(county):
+                      rest = addr_n[len(county):]
+                      for town in towns:
+                          if rest.startswith(town):
+                              return county, town
               return '', ''
 
           for row in rows:
