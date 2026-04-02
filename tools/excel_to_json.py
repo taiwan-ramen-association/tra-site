@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -37,6 +38,21 @@ def parse_city_district(addr):
                 if rest.startswith(town):
                     return county, town
     return '', ''
+
+# ── 營業時段正規化 ────────────────────────────────────────────────────────────
+HOURS_FIELDS = {'週一', '週二', '週三', '週四', '週五', '週六', '週日', '營業時段'}
+
+def normalize_hours(value):
+    """正規化營業時段：統一破折號為全形 en dash、多段時間中間用頓號分隔"""
+    if not value or not isinstance(value, str):
+        return value
+    # 統一破折號為全形 en dash (–)
+    v = re.sub(r'(?<=\d)[—\-~～](?=\d)', '–', value)
+    # 找出所有時段（如 12:00–14:00），以頓號重新組合
+    segments = re.findall(r'\d{1,2}:\d{2}–\d{1,2}:\d{2}', v)
+    if len(segments) >= 2:
+        return '、'.join(segments)
+    return v
 
 # ── 路徑設定 ──────────────────────────────────────────────────────────────────
 tools_dir  = os.path.dirname(os.path.abspath(__file__))
@@ -80,6 +96,10 @@ for row in rows_raw[1:]:
             if val.endswith('.0') and val[:-2].lstrip('-').isdigit():
                 val = val[:-2]
         obj[h] = val
+    # 正規化營業時段欄位
+    for field in HOURS_FIELDS:
+        if field in obj:
+            obj[field] = normalize_hours(obj[field])
     if obj.get('店名', '').strip():  # 只保留有店名的列
         # 若縣市或鄉鎮市區為空，自動從地址解析
         if not obj.get('縣市', '').strip() or not obj.get('鄉鎮市區', '').strip():

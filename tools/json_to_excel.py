@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -64,6 +65,21 @@ for row in rows:
         if not row.get('鄉鎮市區', '').strip():
             row['鄉鎮市區'] = district
 
+# ── 營業時段正規化 ────────────────────────────────────────────────────────────
+HOURS_FIELDS = {'週一', '週二', '週三', '週四', '週五', '週六', '週日', '營業時段'}
+
+def normalize_hours(value):
+    """正規化營業時段：統一破折號為全形 en dash、多段時間中間用頓號分隔"""
+    if not value or not isinstance(value, str):
+        return value
+    # 統一破折號為全形 en dash (–)
+    v = re.sub(r'(?<=\d)[—\-~～](?=\d)', '–', value)
+    # 找出所有時段（如 12:00–14:00），以頓號重新組合
+    segments = re.findall(r'\d{1,2}:\d{2}–\d{1,2}:\d{2}', v)
+    if len(segments) >= 2:
+        return '、'.join(segments)
+    return v
+
 # ── 星期排序正規化 ─────────────────────────────────────────────────────────────
 DAY_ORDER = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7}
 DAY_FIELDS = {'營業日', '店休日'}
@@ -103,6 +119,8 @@ for row_idx, row in enumerate(rows, 2):
         val = row.get(h, '')
         if h in DAY_FIELDS:
             val = normalize_days(val)
+        if h in HOURS_FIELDS:
+            val = normalize_hours(val)
         ws.cell(row=row_idx, column=col_idx, value=val)
 
 # 凍結第一列
