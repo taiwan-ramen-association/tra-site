@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import subprocess
@@ -111,6 +112,51 @@ ws.freeze_panes = 'A2'
 for col in ws.columns:
     max_len = max((len(str(cell.value or '')) for cell in col), default=0)
     ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 40)
+
+# ── 資料驗證（下拉選單）────────────────────────────────────────────────────────
+csv_path = os.path.join(tools_dir, 'item_detail.csv')
+if os.path.exists(csv_path):
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    # 讀取 item_detail.csv
+    with open(csv_path, 'r', encoding='utf-8-sig') as f:
+        reader = csv.reader(f)
+        vld_headers = next(reader)
+        vld_cols = {h: [] for h in vld_headers}
+        for row in reader:
+            for i, h in enumerate(vld_headers):
+                val = row[i].strip() if i < len(row) else ''
+                if val:
+                    vld_cols[h].append(val)
+
+    # 建隱藏工作表存放選項清單
+    ws_vld = wb.create_sheet('驗證清單')
+    ws_vld.sheet_state = 'hidden'
+    for col_idx, h in enumerate(vld_headers, 1):
+        ws_vld.cell(row=1, column=col_idx, value=h)
+        for row_idx, val in enumerate(vld_cols[h], 2):
+            ws_vld.cell(row=row_idx, column=col_idx, value=val)
+
+    # 對主工作表套用下拉驗證
+    last_row = len(rows) + 1
+    col_letter = {h: None for h in vld_headers}
+    for col_idx, h in enumerate(headers, 1):
+        if h in vld_cols:
+            from openpyxl.utils import get_column_letter
+            col_letter[h] = get_column_letter(col_idx)
+
+    for vld_col_idx, h in enumerate(vld_headers, 1):
+        letter = col_letter.get(h)
+        if not letter or not vld_cols[h]:
+            continue
+        from openpyxl.utils import get_column_letter
+        vld_col_letter = get_column_letter(vld_col_idx)
+        vld_range = f'驗證清單!${vld_col_letter}$2:${vld_col_letter}${len(vld_cols[h]) + 1}'
+        dv = DataValidation(type='list', formula1=vld_range, showDropDown=False, allow_blank=True)
+        dv.sqref = f'{letter}2:{letter}{last_row}'
+        ws.add_data_validation(dv)
+
+    print('✅ 已套用下拉選單驗證')
 
 wb.save(xlsx_path)
 print(f'✅ 完成！已產生 data.xlsx（共 {len(rows)} 筆）')

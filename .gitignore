@@ -4,6 +4,10 @@ tools/data.xlsx
 scraped_shops.json
 scraped_shops.xlsx
 
+# 暫存 log
+tools/*_log.txt
+tools/check_*.txt
+
 # 開發殘留
 test_coords.py
 scrape_maps_list.py
