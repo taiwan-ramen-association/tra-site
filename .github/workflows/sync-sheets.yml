@@ -2,7 +2,7 @@ name: Sync Google Sheets ↔ data.json
 
 on:
   schedule:
-    - cron: '0 */6 * * *'   # 每6小時自動同步一次
+    # - cron: '0 */6 * * *'   # 每6小時自動同步一次
     - cron: '0 2 1 * *'     # 每月1日 02:00 更新行政區劃清單
   push:
     paths:
