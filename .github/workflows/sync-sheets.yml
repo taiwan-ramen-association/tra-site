@@ -3,6 +3,7 @@ name: Sync Google Sheets ↔ data.json
 on:
   schedule:
     - cron: '0 */6 * * *'   # 每6小時自動同步一次
+    - cron: '0 2 1 * *'     # 每月1日 02:00 更新行政區劃清單
   push:
     paths:
       - 'data.json'          # 當 data.json 被手動推上來時，反向更新 Google Sheets
@@ -263,3 +264,59 @@ jobs:
 
           print(f'Done: {len(rows)} rows written back to Google Sheets')
           EOF
+
+  # ── JOB 3：每月更新行政區劃清單 ───────────────────────────────────────────────
+  update_districts:
+    name: 更新行政區劃清單
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 2 1 * *'
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Fetch districts from NLSC API
+        run: |
+          python3 << 'EOF'
+          import json, warnings, xml.etree.ElementTree as ET
+          import requests
+          warnings.filterwarnings('ignore')
+
+          API = 'https://api.nlsc.gov.tw/other'
+
+          # 縣市清單
+          r = requests.get(f'{API}/ListCounty', timeout=10, verify=False)
+          root = ET.fromstring(r.content)
+          county_names = {
+              item.findtext('countycode'): item.findtext('countyname')
+              for item in root.findall('countyItem')
+          }
+
+          # 各縣市鄉鎮市區
+          result = {}
+          for code, name in county_names.items():
+              r = requests.get(f'{API}/ListTown1/{code}', timeout=10, verify=False)
+              root = ET.fromstring(r.content)
+              towns = [item.findtext('townname') for item in root.findall('townItem')]
+              if towns:
+                  result[name] = towns
+
+          with open('districts.json', 'w', encoding='utf-8') as f:
+              json.dump(result, f, ensure_ascii=False, indent=2)
+
+          total = sum(len(v) for v in result.values())
+          print(f'Done: {len(result)} 縣市，{total} 鄉鎮市區')
+          EOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add districts.json
+          git diff --cached --quiet \
+            && echo "No changes to districts.json" \
+            || git commit -m "更新行政區劃清單 $(date '+%Y-%m')" && git push
