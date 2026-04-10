@@ -732,9 +732,86 @@
       .ig-grid { grid-template-columns: repeat(2, 1fr); }
       .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
     }
+
+    /* ── TYPEWRITER ── */
+    .tw-cursor {
+      display: inline-block;
+      width: 1.5px;
+      height: 0.8em;
+      background: currentColor;
+      margin-left: 2px;
+      vertical-align: -0.05em;
+      animation: tw-blink 0.75s step-end infinite;
+    }
+    .tw-cursor.done {
+      animation: tw-fade 0.5s ease forwards;
+    }
+    @keyframes tw-blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+    @keyframes tw-fade { to { opacity: 0; } }
+
+    /* ── PARALLAX DECO ── */
+    .deco-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .deco-orb {
+      position: absolute;
+      border-radius: 50%;
+      will-change: transform, border-radius;
+    }
+    /* Orb A: 大圓框線，右上 */
+    .deco-orb--a {
+      width: 480px;
+      height: 480px;
+      top: -60px;
+      right: -120px;
+      border: 1.5px solid rgba(200, 39, 45, 0.13);
+      background: transparent;
+      transform: translateY(var(--deco-a, 0px));
+      border-radius: var(--deco-a-r, 50%);
+    }
+    /* Orb B: 小填色圓，右上偏內 */
+    .deco-orb--b {
+      width: 260px;
+      height: 260px;
+      top: 40px;
+      right: 60px;
+      background: radial-gradient(circle at 40% 40%, rgba(200,39,45,0.06), transparent 70%);
+      transform: translateY(var(--deco-b, 0px));
+      border-radius: var(--deco-b-r, 50%);
+    }
+    /* Orb C: 細線圓，左中 */
+    .deco-orb--c {
+      width: 220px;
+      height: 220px;
+      top: 55vh;
+      left: -70px;
+      border: 1px solid rgba(139, 115, 85, 0.18);
+      background: transparent;
+      transform: translateY(var(--deco-c, 0px));
+      border-radius: var(--deco-c-r, 50%);
+    }
+    @media (max-width: 768px) {
+      .deco-orb--a { width: 300px; height: 300px; right: -80px; }
+      .deco-orb--b { width: 160px; height: 160px; right: 20px; }
+      .deco-orb--c { display: none; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- PARALLAX DECO -->
+  <div class="deco-layer" aria-hidden="true" id="decoLayer">
+    <div class="deco-orb deco-orb--a" id="decoA"></div>
+    <div class="deco-orb deco-orb--b" id="decoB"></div>
+    <div class="deco-orb deco-orb--c" id="decoC"></div>
+  </div>
 
   <!-- DAILY ANNOUNCE OVERLAY -->
   <div id="announce-overlay">
@@ -1345,6 +1422,101 @@
       });
       document.documentElement.lang = {zh:'zh-TW',ja:'ja',en:'en'}[lang];
     }
+
+    // ── TYPEWRITER ──
+    (function () {
+      function typewrite(el, speed) {
+        const text = el.textContent.trim();
+        if (!text) return;
+        el.textContent = '';
+
+        const cursor = document.createElement('span');
+        cursor.className = 'tw-cursor';
+        el.appendChild(cursor);
+
+        let i = 0;
+        function tick() {
+          if (i < text.length) {
+            cursor.insertAdjacentText('beforebegin', text[i++]);
+            setTimeout(tick, speed + Math.random() * (speed * 0.4));
+          } else {
+            // 停留一下後游標淡出消失
+            setTimeout(() => {
+              cursor.classList.add('done');
+              setTimeout(() => cursor.remove(), 500);
+            }, 1000);
+          }
+        }
+        tick();
+      }
+
+      // Hero 英文副標：頁面載入後立刻開始
+      const heroSub = document.querySelector('.hero-title-en');
+      if (heroSub) typewrite(heroSub, 52);
+
+      // Section labels：捲動進入視野時觸發（每個只打一次）
+      const labels = document.querySelectorAll('.section-label');
+      if (labels.length && 'IntersectionObserver' in window) {
+        const obs = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting || entry.target.dataset.twDone) return;
+            entry.target.dataset.twDone = '1';
+            typewrite(entry.target, 38);
+            obs.unobserve(entry.target);
+          });
+        }, { threshold: 0.6 });
+        labels.forEach(el => obs.observe(el));
+      }
+    })();
+
+    // ── PARALLAX DECO ──
+    (function () {
+      const decoA = document.getElementById('decoA');
+      const decoB = document.getElementById('decoB');
+      const decoC = document.getElementById('decoC');
+      if (!decoA) return;
+
+      // border-radius morph: lerp between circle and blob
+      function morphRadius(t) {
+        // t: 0 → circle (50%), 1 → blob
+        const a = Math.round(50 + t * 18);
+        const b = Math.round(50 - t * 18);
+        const c = Math.round(50 + t * 12);
+        const d = Math.round(50 - t * 12);
+        return `${a}% ${b}% ${c}% ${d}% / ${d}% ${c}% ${b}% ${a}%`;
+      }
+
+      let ticking = false;
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const sy = window.scrollY;
+          const vh = window.innerHeight;
+
+          // A: 浮移速度 0.28x，往上 (負)；morph 在前 80vh 發生
+          const shiftA = -(sy * 0.28).toFixed(2);
+          const morphT  = Math.min(sy / (vh * 0.8), 1);
+          decoA.style.setProperty('--deco-a', `${shiftA}px`);
+          decoA.style.setProperty('--deco-a-r', morphRadius(morphT));
+
+          // B: 速度 0.18x，往上；morph 稍慢
+          const shiftB  = -(sy * 0.18).toFixed(2);
+          const morphT2 = Math.min(sy / (vh * 1.2), 1);
+          decoB.style.setProperty('--deco-b', `${shiftB}px`);
+          decoB.style.setProperty('--deco-b-r', morphRadius(morphT2 * 0.6));
+
+          // C: 速度 0.10x，往上；靜態圓形不 morph
+          const shiftC = -(sy * 0.10).toFixed(2);
+          decoC.style.setProperty('--deco-c', `${shiftC}px`);
+
+          ticking = false;
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll(); // 初始化
+    })();
   </script>
 </body>
 </html>

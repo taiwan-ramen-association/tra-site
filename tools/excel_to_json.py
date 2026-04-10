@@ -1,10 +1,12 @@
+"""
+excel_to_json.py — 純轉換：Excel → JSON
+正規化請執行 setup_data.py
+"""
 import json
 import os
-import re
 import subprocess
 import sys
 
-# 安裝需要的套件
 def install(pkg):
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', pkg, '-q'])
 
@@ -15,79 +17,35 @@ except ImportError:
     install('openpyxl')
     import openpyxl
 
-# ── 地址解析 ──────────────────────────────────────────────────────────────────
-def _load_districts():
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'districts.json')  # tools/districts.json
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
+tools_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir  = os.path.dirname(tools_dir)
+xlsx_path = os.path.join(tools_dir, 'data.xlsx')
+json_path = os.path.join(root_dir, 'data.json')
 
-_DISTRICTS = _load_districts()
-
-def parse_city_district(addr):
-    """從地址拆出縣市與鄉鎮市區（比對內政部官方清單）"""
-    if not addr or not _DISTRICTS:
-        return '', ''
-    addr_n = addr.replace('台', '臺')
-    for county, towns in _DISTRICTS.items():
-        if addr_n.startswith(county):
-            rest = addr_n[len(county):]
-            for town in towns:
-                if rest.startswith(town):
-                    return county, town
-    return '', ''
-
-# ── 營業時段正規化 ────────────────────────────────────────────────────────────
-HOURS_FIELDS = {'週一', '週二', '週三', '週四', '週五', '週六', '週日', '營業時段'}
-
-def normalize_hours(value):
-    """正規化營業時段：統一破折號為全形 en dash、多段時間中間用頓號分隔"""
-    if not value or not isinstance(value, str):
-        return value
-    # 統一破折號為全形 en dash (–)
-    v = re.sub(r'(?<=\d)[—\-~～](?=\d)', '–', value)
-    # 找出所有時段（如 12:00–14:00），以頓號重新組合
-    segments = re.findall(r'\d{1,2}:\d{2}–\d{1,2}:\d{2}', v)
-    if len(segments) >= 2:
-        return '、'.join(segments)
-    return v
-
-# ── 路徑設定 ──────────────────────────────────────────────────────────────────
-tools_dir  = os.path.dirname(os.path.abspath(__file__))
-root_dir   = os.path.dirname(tools_dir)
-xlsx_path  = os.path.join(tools_dir, 'data.xlsx')
-json_path  = os.path.join(root_dir, 'data.json')
-
-# ── 檢查檔案存在 ──────────────────────────────────────────────────────────────
 if not os.path.exists(xlsx_path):
     print('❌ 找不到 data.xlsx，請先執行 json_to_excel.py')
     input('按 Enter 關閉...')
     sys.exit(1)
 
-# ── 讀取 Excel ────────────────────────────────────────────────────────────────
 print('📂 讀取 data.xlsx...')
 wb = openpyxl.load_workbook(xlsx_path)
 ws = wb.active
-
 rows_raw = list(ws.values)
+
 if not rows_raw:
     print('❌ Excel 是空的')
     input('按 Enter 關閉...')
     sys.exit(1)
 
 headers = [str(h).strip() for h in rows_raw[0]]
-
 rows = []
+
 for row in rows_raw[1:]:
-    # 跳過完全空白的列
     if all((v is None or str(v).strip() == '') for v in row):
         continue
     obj = {}
     for i, h in enumerate(headers):
         val = row[i] if i < len(row) else ''
-        # None 轉空字串，數字保留
         if val is None:
             val = ''
         else:
@@ -96,31 +54,15 @@ for row in rows_raw[1:]:
             if val.endswith('.0') and val[:-2].lstrip('-').isdigit():
                 val = val[:-2]
         obj[h] = val
-    # 正規化營業時段欄位
-    for field in HOURS_FIELDS:
-        if field in obj:
-            obj[field] = normalize_hours(obj[field])
-    if obj.get('店名', '').strip():  # 只保留有店名的列
-        # 若縣市或鄉鎮市區為空，自動從地址解析
-        if not obj.get('縣市', '').strip() or not obj.get('鄉鎮市區', '').strip():
-            city, district = parse_city_district(obj.get('地址', ''))
-            if not obj.get('縣市', '').strip():
-                obj['縣市'] = city
-            if not obj.get('鄉鎮市區', '').strip():
-                obj['鄉鎮市區'] = district
+    if obj.get('店名', '').strip():
         rows.append(obj)
 
-# ── 寫回 JSON ─────────────────────────────────────────────────────────────────
 with open(json_path, 'w', encoding='utf-8') as f:
     json.dump(rows, f, ensure_ascii=False, indent=2)
 
-print(f'✅ 完成！已更新 data.json（共 {len(rows)} 筆）')
-print(f'📍 檔案位置：{json_path}')
+print(f'✅ 完成！data.json 已更新（共 {len(rows)} 筆）')
+print(f'📍 {json_path}')
 print()
-print('👉 接下來執行以下指令推上 GitHub：')
-print()
-print('   git add data.json')
-print('   git commit -m "更新店家資料"')
-print('   git push')
+print('💡 如需正規化資料，請執行 setup_data.py')
 print()
 input('按 Enter 關閉...')

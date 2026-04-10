@@ -488,9 +488,16 @@ async function loadData() {
 // ── New-open helpers ───────────────────────────────────────────────────────
 function parseOpenDate(str) {
   if (!str) return null;
-  const m = str.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-  if (!m) return null;
-  return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+  // YYYY-MM-DD (標準格式)
+  let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+  // YYYY/M/D
+  m = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+  // YYYY年M月D日（相容舊格式）
+  m = str.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+  return null;
 }
 
 function isNewOpen(shop) {
