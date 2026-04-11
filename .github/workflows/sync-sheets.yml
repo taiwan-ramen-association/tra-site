@@ -93,6 +93,9 @@ jobs:
               for k in ('開幕日', '歇業日'):
                   if k in row:
                       row[k] = fix_date(row[k])
+              d = str(row.get('開幕日', '')).strip()
+              if re.match(r'^\d{4}-\d{2}-\d{2}$', d):
+                  row['開幕月份'] = int(d.split('-')[1])
 
           # 自動從地址解析縣市與鄉鎮市區（比對內政部官方清單）
           try:

@@ -274,6 +274,13 @@
   .link-ig  { background: #fcedf5; color: #c2366a; }
   .link-fb  { background: #edf0fa; color: #2d4b9b; }
 
+  .member-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 10px; letter-spacing: 0.8px; margin-top: 2px;
+    background: #fff8e1; color: #8a6200;
+    border: 1px solid #f0c84a;
+  }
+
   .new-open-badge {
     flex-shrink: 0; font-size: 10px; font-weight: 700;
     padding: 3px 7px; border-radius: 10px; letter-spacing: 0.8px; margin-top: 2px;
@@ -355,7 +362,7 @@
 <div id="mainContent">
   <div class="filter-bar">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="搜尋店名、地址、派系、新開幕…" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="搜尋店名、地址、派系、新開幕、會員店家…" autocomplete="off">
     </div>
     <div class="filter-row">
       <div class="filter-group">
@@ -600,8 +607,11 @@ function getFiltered() {
 
     if (query) {
       const newOpenQuery = query === 'new open' || query === '新開幕';
+      const memberQuery  = query === 'member shop' || query === '會員店家';
       if (newOpenQuery) {
         if (!isNewOpen(shop)) return false;
+      } else if (memberQuery) {
+        if (shop['會員'] !== 'Y') return false;
       } else {
         const hay = [shop['店名'],shop['地址'],shop['派系'],shop['類型'],shop['醬底']].join(' ').toLowerCase();
         if (!hay.includes(query)) return false;
@@ -610,13 +620,17 @@ function getFiltered() {
     return true;
   });
 
-  if (userLat !== null) {
-    result.sort((a, b) => {
+  result.sort((a, b) => {
+    const am = a['會員'] === 'Y' ? 0 : 1;
+    const bm = b['會員'] === 'Y' ? 0 : 1;
+    if (am !== bm) return am - bm;
+    if (userLat !== null) {
       const da = shopDist(a) ?? Infinity;
       const db = shopDist(b) ?? Infinity;
       return da - db;
-    });
-  }
+    }
+    return 0;
+  });
   return result;
 }
 
@@ -852,6 +866,7 @@ function renderCard(shop) {
       <div class="card-name">${shop['店名']}</div>
       <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
         ${dist !== null ? `<span class="dist-badge">${formatDist(dist)}</span>` : ''}
+        ${shop['會員'] === 'Y' ? '<span class="member-badge">MEMBER SHOP</span>' : ''}
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
       </div>
