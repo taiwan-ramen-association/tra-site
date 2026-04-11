@@ -251,44 +251,6 @@
       color: rgba(255,255,255,0.4);
       line-height: 1.8;
     }
-    #finder-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      background: var(--paper);
-      flex-direction: column;
-    }
-    #finder-overlay.open { display: flex; }
-    #finder-overlay-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      height: 52px;
-      background: var(--red);
-      flex-shrink: 0;
-    }
-    #finder-overlay-bar span {
-      font-family: 'Noto Serif TC', serif;
-      font-size: 14px;
-      letter-spacing: 3px;
-      color: var(--white);
-    }
-    #finder-close {
-      background: none;
-      border: none;
-      color: var(--white);
-      font-size: 22px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 4px 8px;
-    }
-    #finder-overlay iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-    }
 
     .btn-finder {
       display: inline-block;
@@ -564,24 +526,38 @@
     .partners-cat + .partners-cat { margin-top: 32px; }
     .partners-grid {
       display: grid;
-      gap: 1px;
-      background: var(--line);
+      gap: 20px;
+      background: transparent;
       margin-bottom: 2px;
+      padding: 10px 6px;
     }
     .partners-grid-4 { grid-template-columns: repeat(4, 1fr); }
     .partners-grid-3 { grid-template-columns: repeat(3, 1fr); }
     .partner-slot {
-      background: var(--paper);
+      position: relative;
+      background: var(--white);
       aspect-ratio: 1/1;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
-      transition: opacity 0.2s;
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 2px 3px 10px rgba(0,0,0,0.07);
+      transition: transform 0.25s, box-shadow 0.25s;
+      transform: rotate(3deg);
     }
-    .partner-slot:hover { opacity: 0.7; }
+    .partner-slot:nth-child(2n) { transform: rotate(-4deg); }
+    .partner-slot:nth-child(3n) { transform: rotate(4deg); }
+    .partner-slot:nth-child(4n) { transform: rotate(-3deg); }
+    .partner-slot:nth-child(5n) { transform: rotate(3.5deg); }
+    .partner-slot:hover {
+      transform: rotate(0deg) scale(1.05);
+      box-shadow: 4px 6px 18px rgba(0,0,0,0.13);
+      z-index: 1;
+    }
     .partner-slot img { max-height: 80px; max-width: 100%; width: auto; object-fit: contain; }
-    .partner-slot--member { background: var(--white); outline: 2px solid var(--red); outline-offset: -2px; }
+    .partner-slot--member { border-color: var(--red); border-width: 2px; }
     .partner-member-badge {
       position: absolute;
       top: 6px; right: 6px;
@@ -589,10 +565,10 @@
       letter-spacing: 2px;
       color: var(--white);
       background: var(--red);
+      border-radius: 3px;
       padding: 2px 5px;
       pointer-events: none;
     }
-    .partner-slot { position: relative; }
     .partners-more {
       font-size: 11px;
       letter-spacing: 2px;
@@ -847,7 +823,7 @@
     <ul class="nav-links">
       <li><a href="about.html" data-i18n="nav_about">關於協會</a></li>
       <li><a href="news.html" data-i18n="nav_news">最新消息</a></li>
-      <li><a href="#" onclick="openFinder();return false;" data-i18n="nav_finder">拉麵搜尋</a></li>
+      <li><a href="finder.html" target="_blank" rel="noopener" data-i18n="nav_finder">拉麵搜尋</a></li>
       <li><a href="membership.html" data-i18n="nav_join">加入會員</a></li>
       <li><a href="#contact" data-i18n="nav_contact">聯絡我們</a></li>
     </ul>
@@ -871,7 +847,7 @@
   <div class="mobile-menu" id="mobile-menu">
     <a href="about.html" data-i18n="nav_about">關於協會</a>
     <a href="news.html" data-i18n="nav_news">最新消息</a>
-    <a href="#"        onclick="openFinder();closeMenu();return false;" data-i18n="nav_finder">拉麵搜尋</a>
+    <a href="finder.html" target="_blank" rel="noopener" onclick="closeMenu()" data-i18n="nav_finder">拉麵搜尋</a>
     <a href="membership.html" data-i18n="nav_join">加入會員</a>
     <a href="#contact" onclick="closeMenu()" data-i18n="nav_contact">聯絡我們</a>
   </div>
@@ -884,7 +860,7 @@
     <p class="hero-title-en" data-i18n="hero_subtitle">TAIWAN RAMEN ASSOCIATION</p>
     <p class="hero-desc" data-i18n="hero_desc">推廣台灣拉麵文化，連結愛好者、店家與職人。<br>從一碗麵開始，建立屬於台灣的拉麵生態圈。</p>
     <div class="hero-actions">
-      <a href="#" onclick="openFinder();return false;" class="btn-primary" data-i18n="hero_cta1">拉麵搜尋器</a>
+      <a href="finder.html" target="_blank" rel="noopener" class="btn-primary" data-i18n="hero_cta1">拉麵搜尋器</a>
       <a href="#about"  class="btn-secondary" data-i18n="hero_cta2">了解更多</a>
     </div>
     <div class="hero-scroll">
@@ -948,7 +924,7 @@
     <h2 class="section-title" data-i18n="finder_title">拉麵搜尋器</h2>
     <p class="finder-desc" data-i18n="finder_desc">全台 300+ 間拉麵店家，依縣市、營業時間、特色篩選，即時查看是否營業中。</p>
     <div style="display:flex;flex-wrap:wrap;gap:0;align-items:center;">
-      <a href="#" onclick="openFinder();return false;" class="btn-finder" data-i18n="finder_cta">前往搜尋器 →</a>
+      <a href="finder.html" target="_blank" rel="noopener" class="btn-finder" data-i18n="finder_cta">前往搜尋器 →</a>
       <a id="april-fools-btn" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener" class="btn-live">
         <span class="live-dot"></span>即時排隊情報
       </a>
@@ -1019,7 +995,7 @@
         <div class="footer-col-title" data-i18n="footer_col2">SERVICE</div>
         <ul class="footer-links">
           <li><a href="index.html#finder" data-i18n="footer_finder">店家搜尋器</a></li>
-          <li><a href="#" onclick="openFinder();return false;" data-i18n="footer_map">拉麵地圖</a></li>
+          <li><a href="finder.html" target="_blank" rel="noopener" data-i18n="footer_map">拉麵地圖</a></li>
           <li><a href="#" data-i18n="footer_news">活動資訊</a></li>
         </ul>
       </div>
@@ -1050,14 +1026,6 @@
     </div>
   </footer>
 
-  <!-- FINDER OVERLAY -->
-  <div id="finder-overlay">
-    <div id="finder-overlay-bar">
-      <span data-i18n="finder_title">拉麵搜尋器</span>
-      <button id="finder-close" onclick="closeFinder()" title="關閉">✕</button>
-    </div>
-    <iframe src="" id="finder-frame" allowfullscreen></iframe>
-  </div>
 
   <script>
     // ── APRIL FOOLS FLAG ──
@@ -1170,19 +1138,6 @@
       }
     })();
 
-    // ── FINDER OVERLAY ──
-    function openFinder() {
-      const overlay = document.getElementById('finder-overlay');
-      const frame = document.getElementById('finder-frame');
-      if (!frame.getAttribute('src')) frame.setAttribute('src', 'finder.html');
-      overlay.classList.add('open');
-      lockScroll();
-    }
-    function closeFinder() {
-      document.getElementById('finder-overlay').classList.remove('open');
-      unlockScroll();
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFinder(); });
 
     // ── HOME NEWS ──
     fetch('news.json?t=' + Date.now())
