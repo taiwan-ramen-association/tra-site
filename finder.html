@@ -262,15 +262,47 @@
     border-radius: 10px; padding: 1px 7px; font-weight: 500;
   }
 
+  /* ── HEADER extras ── */
+  header { display: flex; align-items: center; justify-content: space-between; }
+  .hamburger-btn {
+    background: rgba(255,255,255,0.18); border: none; color: white;
+    border-radius: 8px; padding: 6px 10px; font-size: 18px; cursor: pointer;
+    line-height: 1; flex-shrink: 0;
+  }
+  .hamburger-btn:active { background: rgba(255,255,255,0.32); }
+
+  /* ── DRAWER ── */
+  .drawer-backdrop { position: fixed; inset: 0; z-index: 98; }
+  .drawer {
+    position: fixed; top: 44px; right: 0; z-index: 99;
+    background: var(--white); border-radius: 0 0 0 12px;
+    box-shadow: -2px 4px 20px rgba(0,0,0,0.18); min-width: 160px;
+    overflow: hidden;
+  }
+  .drawer-item {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 14px 20px; border: none; background: none;
+    font-size: 15px; font-family: 'Noto Sans TC', sans-serif;
+    color: var(--ink); cursor: pointer; text-align: left;
+  }
+  .drawer-item:active { background: var(--paper); }
+  .drawer-item.active { color: var(--red); font-weight: 500; }
+
   /* ── VIEW TOGGLE ── */
   .result-actions { display: flex; gap: 8px; align-items: center; }
-  .view-toggle { display: flex; border: 1.5px solid var(--line); border-radius: 7px; overflow: hidden; }
-  .view-btn {
-    border: none; background: var(--paper); color: var(--stone);
-    padding: 5px 11px; font-size: 13px; cursor: pointer;
-    font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s;
+  .view-toggle-btn {
+    border: 1.5px solid var(--line); background: var(--paper); color: var(--stone);
+    border-radius: 7px; padding: 5px 11px; font-size: 13px; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; white-space: nowrap;
   }
-  .view-btn.active { background: var(--red); color: white; }
+  .view-toggle-btn:active { background: var(--line); }
+
+  /* ── FAV BUTTON ── */
+  .fav-btn {
+    border: none; background: none; cursor: pointer;
+    font-size: 18px; padding: 0 2px; line-height: 1;
+    color: var(--red); flex-shrink: 0;
+  }
 
   .map-ctrl-btn {
     width: 34px; height: 34px; border-radius: 6px;
@@ -297,7 +329,12 @@
 
 <header>
   <h1>🍜 台灣拉麵協會－拉麵搜尋器</h1>
+  <button class="hamburger-btn" id="hamburgerBtn">☰</button>
 </header>
+<div class="drawer-backdrop" id="drawerBackdrop" style="display:none"></div>
+<div class="drawer" id="drawer" style="display:none">
+  <button class="drawer-item" id="favFilterBtn">♥ 收藏清單</button>
+</div>
 
 <div id="loadingScreen" class="loading-screen">
   <div class="loader"></div>
@@ -321,10 +358,6 @@
         <select id="cityFilter"><option value="">全部縣市</option></select>
       </div>
       <div class="filter-group">
-        <label>營業時間</label>
-        <select id="timeFilter"><option value="">不限時間</option></select>
-      </div>
-      <div class="filter-group">
         <label>營業日</label>
         <select id="dayFilter">
           <option value="">全部</option>
@@ -337,6 +370,10 @@
           <option value="日">週日</option>
         </select>
       </div>
+      <div class="filter-group">
+        <label>營業時間</label>
+        <select id="timeFilter"><option value="">不限時間</option></select>
+      </div>
     </div>
   </div>
 
@@ -345,10 +382,7 @@
     <div class="result-actions">
       <button class="now-open-btn" id="nowOpenBtn">🟢 現在營業中</button>
       <button class="locate-btn" id="locateBtn">📍 定位</button>
-      <div class="view-toggle">
-        <button class="view-btn active" id="viewList">☰ 清單</button>
-        <button class="view-btn" id="viewMap">🗺 地圖</button>
-      </div>
+      <button class="view-toggle-btn" id="viewToggleBtn">🗺 地圖</button>
       <button class="clear-btn" id="clearBtn">清除篩選</button>
     </div>
   </div>
@@ -363,13 +397,18 @@
 const DATA_URL = './data.json';
 
 // ── State ──────────────────────────────────────────────────────────────────
-let ALL_DATA        = [];
-let serverDate      = new Date();
-let serverTimeOffset = 0; // ms，device 與 server 時鐘差
-let selectedDay     = '';
-let isNowOpen       = false;
+let ALL_DATA         = [];
+let serverDate       = new Date();
+let serverTimeOffset = 0;
+let selectedDay      = '';
+let isNowOpen        = false;
+let showFavOnly      = false;
+let favSet           = new Set(JSON.parse(localStorage.getItem('tw-ramen-favs') || '[]'));
 
 function serverNow() { return new Date(Date.now() + serverTimeOffset); }
+function saveFavs()  { localStorage.setItem('tw-ramen-favs', JSON.stringify([...favSet])); }
+function escapeAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
 let expandedCard = null;
 let currentView  = 'list';
 let leafletMap   = null;
@@ -535,6 +574,7 @@ function getFiltered() {
   selectedDay   = document.getElementById('dayFilter').value;
 
   const result = ALL_DATA.filter(shop => {
+    if (showFavOnly && !favSet.has(shop['店名'])) return false;
     if (city && shop['縣市'] !== city) return false;
 
     if (selectedDay) {
@@ -691,8 +731,7 @@ function toggleFollow() {
 // ── Map ────────────────────────────────────────────────────────────────────
 function switchView(v) {
   currentView = v;
-  document.getElementById('viewList').classList.toggle('active', v === 'list');
-  document.getElementById('viewMap').classList.toggle('active', v === 'map');
+  document.getElementById('viewToggleBtn').textContent = v === 'list' ? '🗺 地圖' : '☰ 清單';
   document.getElementById('cardList').style.display     = v === 'list' ? '' : 'none';
   document.getElementById('mapContainer').style.display = v === 'map'  ? 'block' : 'none';
   if (v === 'map' && !leafletMap) initMap();
@@ -844,6 +883,7 @@ function renderCard(shop) {
         ${shop['會員'] === 'Y' ? '<span class="member-badge">MEMBER SHOP</span>' : ''}
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
+        <button class="fav-btn" data-name="${escapeAttr(shop['店名'])}">${favSet.has(shop['店名']) ? '♥' : '♡'}</button>
       </div>
     </div>
     <div class="card-meta">
@@ -883,11 +923,21 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
       if (expandedCard) setTimeout(() => card.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
+    });
+  });
+  list.querySelectorAll('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const name = btn.dataset.name;
+      if (favSet.has(name)) { favSet.delete(name); btn.textContent = '♡'; }
+      else { favSet.add(name); btn.textContent = '♥'; }
+      saveFavs();
+      if (showFavOnly) render();
     });
   });
 }
@@ -897,8 +947,7 @@ document.getElementById('searchInput').addEventListener('input', render);
 document.getElementById('cityFilter').addEventListener('change', render);
 document.getElementById('timeFilter').addEventListener('change', render);
 document.getElementById('dayFilter').addEventListener('change', render);
-document.getElementById('viewList').addEventListener('click', () => switchView('list'));
-document.getElementById('viewMap').addEventListener('click',  () => switchView('map'));
+document.getElementById('viewToggleBtn').addEventListener('click', () => switchView(currentView === 'list' ? 'map' : 'list'));
 document.getElementById('locateBtn').addEventListener('click', locateUser);
 document.getElementById('nowOpenBtn').addEventListener('click', toggleNowOpen);
 document.getElementById('retryBtn').addEventListener('click', loadData);
@@ -908,7 +957,28 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('timeFilter').value  = '';
   document.getElementById('dayFilter').value   = '';
   isNowOpen = false;
+  showFavOnly = false;
   document.getElementById('nowOpenBtn').classList.remove('active');
+  document.getElementById('favFilterBtn').classList.remove('active');
+  render();
+});
+
+document.getElementById('hamburgerBtn').addEventListener('click', () => {
+  const drawer   = document.getElementById('drawer');
+  const backdrop = document.getElementById('drawerBackdrop');
+  const open = drawer.style.display === 'none';
+  drawer.style.display   = open ? '' : 'none';
+  backdrop.style.display = open ? '' : 'none';
+});
+document.getElementById('drawerBackdrop').addEventListener('click', () => {
+  document.getElementById('drawer').style.display   = 'none';
+  document.getElementById('drawerBackdrop').style.display = 'none';
+});
+document.getElementById('favFilterBtn').addEventListener('click', () => {
+  showFavOnly = !showFavOnly;
+  document.getElementById('favFilterBtn').classList.toggle('active', showFavOnly);
+  document.getElementById('drawer').style.display   = 'none';
+  document.getElementById('drawerBackdrop').style.display = 'none';
   render();
 });
 
