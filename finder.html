@@ -151,8 +151,8 @@
   .card.expanded { border-color: var(--red); }
   .card.member  { background: #fffdf5; border-color: #e8d48a; }
   .card.member.expanded { border-color: #c8a820; }
-  .card.birthday { background: #fffbf0; border-color: #f0c84a; }
-  .card.birthday.expanded { border-color: #d4a017; }
+  .card.birthday { background: #fff0f4; border-color: #f4b8cc; }
+  .card.birthday.expanded { border-color: #e07095; }
 
   .card-header {
     padding: 12px 13px 7px;
@@ -246,6 +246,12 @@
     padding: 3px 7px; border-radius: 10px; letter-spacing: 0.8px; margin-top: 2px;
     background: var(--red); color: var(--white);
   }
+  .birthday-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 10px; letter-spacing: 0.8px; margin-top: 2px;
+    background: #fde8f0; color: #c2185b;
+    border: 1px solid #f4b8cc;
+  }
 
   .empty-state { text-align: center; padding: 60px 20px; color: var(--stone); }
   .empty-state .big { font-size: 38px; margin-bottom: 10px; }
@@ -329,6 +335,13 @@
   .map-popup-meta { font-size: 12px; color: var(--stone); margin-bottom: 3px; line-height: 1.5; }
   .map-popup-note { font-size: 11px; background: #fffae8; border-left: 2px solid #f0c84a; padding: 4px 7px; margin-top: 6px; border-radius: 0 4px 4px 0; color: #6b5500; line-height: 1.5; }
   .map-popup-link { display: inline-block; margin-top: 8px; font-size: 12px; color: #1a73e8; text-decoration: none; font-weight: 500; }
+
+  /* ── FIREWORKS ── */
+  #fireworks-canvas {
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 9999; opacity: 1;
+    transition: opacity 1s ease;
+  }
 </style>
 </head>
 <body>
@@ -480,6 +493,8 @@ async function loadData() {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('mainContent').style.display   = 'block';
     render();
+    const bdShops = ALL_DATA.filter(s => isBirthday(s)).map(s => s['店名']);
+    if (bdShops.length) launchFireworks(bdShops);
   } catch(e) {
     console.error(e);
     document.getElementById('loadingScreen').style.display = 'none';
@@ -898,9 +913,10 @@ function renderCard(shop) {
   return `
   <div class="card${member ? ' member' : ''}${birthday ? ' birthday' : ''}">
     <div class="card-header">
-      <div class="card-name">${shop['店名']}${birthday ? ' 🎂' : ''}</div>
+      <div class="card-name">${shop['店名']}</div>
       <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
         ${dist !== null ? `<span class="dist-badge">${formatDist(dist)}</span>` : ''}
+        ${birthday ? '<span class="birthday-badge">🎂 本日壽星</span>' : ''}
         ${shop['會員'] === 'Y' ? '<span class="member-badge">MEMBER SHOP</span>' : ''}
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
@@ -1002,6 +1018,124 @@ document.getElementById('favFilterBtn').addEventListener('click', () => {
   document.getElementById('drawerBackdrop').style.display = 'none';
   render();
 });
+
+// ── Fireworks ──────────────────────────────────────────────────────────────
+const BD_SKIP_KEY = 'tw-ramen-bd-skip';
+function bdToday() {
+  return new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' });
+}
+
+function launchFireworks(birthdayShops) {
+  if (localStorage.getItem(BD_SKIP_KEY) === bdToday()) return;
+  // ── Canvas ──
+  const canvas = document.createElement('canvas');
+  canvas.id = 'fireworks-canvas';
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const COLORS = ['#f48fb1','#f06292','#e91e63','#ff8a65','#ffb74d','#fff176','#a5d6a7','#80cbc4','#90caf9','#ce93d8'];
+  const particles = [];
+
+  function spawnBurst(x, y) {
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    for (let i = 0; i < 60; i++) {
+      const angle = (Math.PI * 2 / 60) * i;
+      const speed = 2 + Math.random() * 4;
+      particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        alpha: 1, radius: 2 + Math.random() * 2, color,
+        decay: 0.012 + Math.random() * 0.008,
+      });
+    }
+  }
+
+  const launches = [
+    [0.25, 0.35], [0.75, 0.25], [0.5, 0.45],
+    [0.2, 0.55],  [0.8, 0.4],
+  ];
+  launches.forEach(([rx, ry], i) => {
+    setTimeout(() => spawnBurst(canvas.width * rx, canvas.height * ry), i * 400);
+  });
+
+  let started = null;
+  const DURATION = 3500;
+
+  function loop(ts) {
+    if (!started) started = ts;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vy += 0.07; p.vx *= 0.98;
+      p.alpha -= p.decay;
+      if (p.alpha <= 0) { particles.splice(i, 1); continue; }
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (ts - started < DURATION || particles.length > 0) {
+      requestAnimationFrame(loop);
+    } else {
+      canvas.style.opacity = '0';
+      setTimeout(() => canvas.remove(), 1000);
+    }
+  }
+  requestAnimationFrame(loop);
+
+  // ── 生日文字浮出 ──
+  const banner = document.createElement('div');
+  banner.style.cssText = `
+    position:fixed; inset:0; z-index:10000; pointer-events:none;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; opacity:0;
+    transition: opacity 0.5s ease;
+  `;
+
+  birthdayShops.forEach(name => {
+    const line = document.createElement('div');
+    line.style.cssText = `
+      font-family:'Noto Serif TC',serif; font-weight:900;
+      font-size:clamp(22px,5vw,40px); letter-spacing:0.12em;
+      color:#fff; text-shadow:0 2px 12px rgba(0,0,0,0.35),0 0 30px #f06292;
+      background:rgba(0,0,0,0.18); padding:10px 28px; border-radius:50px;
+      white-space:nowrap;
+    `;
+    line.textContent = `${name} 生日快樂！`;
+    banner.appendChild(line);
+  });
+
+  // checkbox：pointer-events 單獨開啟
+  const skipLabel = document.createElement('label');
+  skipLabel.style.cssText = `
+    margin-top:14px; display:flex; align-items:center; gap:7px;
+    pointer-events:auto; cursor:pointer;
+    font-size:13px; letter-spacing:1px; color:rgba(255,255,255,0.85);
+    text-shadow:0 1px 4px rgba(0,0,0,0.4);
+    user-select:none;
+  `;
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.style.cssText = 'width:15px;height:15px;cursor:pointer;accent-color:#f06292;';
+  cb.addEventListener('change', () => {
+    if (cb.checked) localStorage.setItem(BD_SKIP_KEY, bdToday());
+    else localStorage.removeItem(BD_SKIP_KEY);
+  });
+  skipLabel.appendChild(cb);
+  skipLabel.appendChild(document.createTextNode('當日不再顯示'));
+  banner.appendChild(skipLabel);
+
+  document.body.appendChild(banner);
+
+  // 300ms 淡入，3.2s 後淡出
+  setTimeout(() => { banner.style.opacity = '1'; }, 300);
+  setTimeout(() => { banner.style.opacity = '0'; }, 3200);
+  setTimeout(() => banner.remove(), 3800);
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData();
