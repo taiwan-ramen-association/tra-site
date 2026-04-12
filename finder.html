@@ -1078,18 +1078,30 @@ function launchFireworks(birthdayShops) {
   }
 
   // 10 秒內分散發射約 12 顆火箭
-  const DURATION    = 10000;
-  const ROCKET_TIMES = Array.from({ length: 12 }, (_, i) => 300 + i * 750 + Math.random() * 300);
+  const DURATION    = 7000;
+  const ROCKET_TIMES = Array.from({ length: 10 }, (_, i) => 300 + i * 580 + Math.random() * 200);
   ROCKET_TIMES.forEach(t => setTimeout(spawnRocket, t));
 
   let started = null;
+  let dismissed = false;
+
+  function dismiss() {
+    dismissed = true;
+    canvas.style.transition = 'opacity 0.4s ease';
+    canvas.style.opacity = '0';
+    setTimeout(() => canvas.remove(), 450);
+    if (banner.parentNode) {
+      banner.style.opacity = '0';
+      setTimeout(() => banner.remove(), 450);
+    }
+  }
 
   function loop(ts) {
     if (!started) started = ts;
     const elapsed = ts - started;
 
     // 半透明覆蓋產生拖尾殘影效果
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillStyle = 'rgba(0,0,0,0.10)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // ── 火箭 ──
@@ -1139,9 +1151,9 @@ function launchFireworks(birthdayShops) {
     }
     ctx.globalAlpha = 1;
 
-    if (elapsed < DURATION || rockets.length > 0 || particles.length > 0) {
+    if (!dismissed && (elapsed < DURATION || rockets.length > 0 || particles.length > 0)) {
       requestAnimationFrame(loop);
-    } else {
+    } else if (!dismissed) {
       canvas.style.transition = 'opacity 1s ease';
       canvas.style.opacity = '0';
       setTimeout(() => canvas.remove(), 1100);
@@ -1188,11 +1200,29 @@ function launchFireworks(birthdayShops) {
   skipLabel.appendChild(cb);
   skipLabel.appendChild(document.createTextNode('當日不再顯示'));
   banner.appendChild(skipLabel);
+
+  // x 關閉按鈕
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = `
+    position:fixed; top:16px; right:16px;
+    pointer-events:auto; cursor:pointer;
+    width:36px; height:36px; border-radius:50%;
+    background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.4);
+    color:#fff; font-size:16px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.2s;
+  `;
+  closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(255,255,255,0.3)'; });
+  closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'rgba(255,255,255,0.15)'; });
+  closeBtn.addEventListener('click', dismiss);
+  banner.appendChild(closeBtn);
+
   document.body.appendChild(banner);
 
   setTimeout(() => { banner.style.opacity = '1'; }, 700);
-  setTimeout(() => { banner.style.opacity = '0'; }, 5000);
-  setTimeout(() => banner.remove(), 5700);
+  setTimeout(() => { if (!dismissed) banner.style.opacity = '0'; }, 6400);
+  setTimeout(() => { if (!dismissed) banner.remove(); }, 7100);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
