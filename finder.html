@@ -1059,7 +1059,7 @@ function launchFireworks(birthdayShops) {
     });
   }
 
-  // 爆炸
+  // 普通爆炸
   function explode(x, y, color) {
     const count = 80 + Math.floor(Math.random() * 40);
     for (let i = 0; i < count; i++) {
@@ -1069,33 +1069,83 @@ function launchFireworks(birthdayShops) {
         x, y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        alpha: 1,
-        radius: 1.5 + Math.random() * 2,
-        color,
-        decay: 0.014 + Math.random() * 0.01,
+        alpha: 1, radius: 1.5 + Math.random() * 2,
+        color, decay: 0.014 + Math.random() * 0.01,
       });
     }
   }
 
+  // 大爆炸（第一發用）
+  function explodeBig(x, y, color) {
+    const count = 180;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.15;
+      const speed = 3 + Math.random() * 8;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1, radius: 2 + Math.random() * 3,
+        color, decay: 0.009 + Math.random() * 0.006,
+      });
+    }
+  }
+
+  // 菊花爆炸（最後一發：多層同心環，雙色）
+  function explodeChrysanthemum(x, y) {
+    const colorA = COLORS[Math.floor(Math.random() * COLORS.length)];
+    let colorB;
+    do { colorB = COLORS[Math.floor(Math.random() * COLORS.length)]; } while (colorB === colorA);
+
+    const RINGS = [
+      { count: 60,  speed: 3.5, color: colorA, r: 2.5 },
+      { count: 80,  speed: 6,   color: colorB, r: 2   },
+      { count: 100, speed: 9,   color: colorA, r: 1.5 },
+      { count: 60,  speed: 12,  color: colorB, r: 1   },
+    ];
+    RINGS.forEach(ring => {
+      for (let i = 0; i < ring.count; i++) {
+        const angle = (Math.PI * 2 / ring.count) * i;
+        const jitter = (Math.random() - 0.5) * 0.3;
+        const s = ring.speed + (Math.random() - 0.5) * 1;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle + jitter) * s,
+          vy: Math.sin(angle + jitter) * s,
+          alpha: 1, radius: ring.r,
+          color: ring.color, decay: 0.007 + Math.random() * 0.005,
+        });
+      }
+    });
+  }
+
   const DURATION = 7000;
 
-  // 第一顆：從正中間底部發射，爆炸在正中間
-  // vy = -12，到達 canvas.height * 0.5 需要約多少幀：模擬飛行時間 ≈ 800ms
+  // 第一顆：正中間底部 → 正中間爆炸（大爆炸）
   const FIRST_EXPLODE_MS = 800;
   setTimeout(() => {
     rockets.push({
       x: canvas.width * 0.5, y: canvas.height,
-      vx: 0,
-      vy: -12,
+      vx: 0, vy: -12,
       targetY: canvas.height * 0.5,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      trail: [],
+      trail: [], big: true,
     });
   }, 0);
 
-  // 後續 9 顆隨機發射
-  const ROCKET_TIMES = Array.from({ length: 9 }, (_, i) => 700 + i * 650 + Math.random() * 250);
+  // 中間 8 顆隨機普通
+  const ROCKET_TIMES = Array.from({ length: 8 }, (_, i) => 700 + i * 650 + Math.random() * 250);
   ROCKET_TIMES.forEach(t => setTimeout(spawnRocket, t));
+
+  // 最後一顆：大菊花，固定在畫面偏上正中
+  setTimeout(() => {
+    rockets.push({
+      x: canvas.width * 0.5, y: canvas.height,
+      vx: 0, vy: -13,
+      targetY: canvas.height * 0.3,
+      color: null, trail: [], chrysanthemum: true,
+    });
+  }, 6000);
 
   let started = null;
   let dismissed = false;
@@ -1148,7 +1198,9 @@ function launchFireworks(birthdayShops) {
 
       // 到達目標高度或開始下墜就爆炸
       if (r.y <= r.targetY || r.vy >= 0) {
-        explode(r.x, r.y, r.color);
+        if (r.chrysanthemum) explodeChrysanthemum(r.x, r.y);
+        else if (r.big)      explodeBig(r.x, r.y, r.color);
+        else                 explode(r.x, r.y, r.color);
         rockets.splice(i, 1);
       }
     }
@@ -1238,10 +1290,10 @@ function launchFireworks(birthdayShops) {
   skipLabel.appendChild(document.createTextNode('當日不再顯示'));
   document.body.appendChild(skipLabel);
 
-  // 文字與第一顆爆炸同步出現
-  setTimeout(() => { banner.style.opacity = '1'; }, FIRST_EXPLODE_MS);
+  // 文字在第一顆爆炸後 300ms 出現
+  setTimeout(() => { banner.style.opacity = '1'; }, FIRST_EXPLODE_MS + 300);
   // checkbox 在文字出現後 2 秒才顯示
-  setTimeout(() => { if (!dismissed) skipLabel.style.opacity = '1'; }, FIRST_EXPLODE_MS + 2000);
+  setTimeout(() => { if (!dismissed) skipLabel.style.opacity = '1'; }, FIRST_EXPLODE_MS + 300 + 2000);
   // 淡出
   setTimeout(() => { if (!dismissed) { banner.style.opacity = '0'; skipLabel.style.opacity = '0'; } }, 6400);
   setTimeout(() => { if (!dismissed) { banner.remove(); skipLabel.remove(); } }, 7100);
