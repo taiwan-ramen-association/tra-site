@@ -20,7 +20,7 @@ except ImportError:
 tools_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir  = os.path.dirname(tools_dir)
 xlsx_path = os.path.join(tools_dir, 'data.xlsx')
-json_path = os.path.join(root_dir, 'data.json')
+json_path = os.path.join(root_dir, 'data', 'data.json')
 
 if not os.path.exists(xlsx_path):
     print('❌ 找不到 data.xlsx，請先執行 json_to_excel.py')

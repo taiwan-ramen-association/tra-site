@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="icon/03.png">
+  <link rel="icon" href="assets/icons/03.png">
   <meta name="google-adsense-account" content="ca-pub-6476285123291834">
   <title>台灣拉麵協會 | Taiwan Ramen Association</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6476285123291834" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
   <style>
     /* index nav overrides: fixed position, slightly more transparent */
     nav { position: fixed; left: 0; right: 0; background: rgba(250, 250, 248, 0.92); }
@@ -970,7 +970,7 @@
   <footer>
     <div class="footer-grid">
       <div>
-        <div class="footer-logo"><img src="icon/02.png" alt="台灣拉麵協會"></div>
+        <div class="footer-logo"><img src="assets/icons/02.png" alt="台灣拉麵協會"></div>
         <p class="footer-tagline" data-i18n="footer_tagline">Taiwan Ramen Association</p>
         <div class="footer-social">
           <a href="https://www.instagram.com/twramen.assoc/" target="_blank">Instagram</a>
@@ -1048,7 +1048,7 @@
     function loadAnnounceNews() {
       if (_announceLoaded) return;
       _announceLoaded = true;
-      fetch('news.json?t=' + Date.now())
+      fetch('data/news.json?t=' + Date.now())
         .then(r => {
           const serverDate = r.headers.get('Date');
           if (serverDate) {
@@ -1160,7 +1160,7 @@
 
 
     // ── HOME NEWS ──
-    fetch('news.json?t=' + Date.now())
+    fetch('data/news.json?t=' + Date.now())
       .then(r => r.json())
       .then(data => {
         const list = document.getElementById('home-news-list');
@@ -1184,7 +1184,7 @@
       });
 
     // ── HOME PARTNERS ──
-    fetch('partners.json?t=' + Date.now())
+    fetch('data/partners.json?t=' + Date.now())
       .then(r => r.json())
       .then(data => {
         const container = document.getElementById('partners-index');
@@ -1224,7 +1224,7 @@
       });
 
     // ── INSTAGRAM ──
-    fetch('instagram.json?t=' + Date.now())
+    fetch('data/instagram.json?t=' + Date.now())
       .then(r => r.json())
       .then(posts => {
         const grid = document.getElementById('ig-grid');

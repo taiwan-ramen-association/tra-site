@@ -1,21 +1,24 @@
 # 本機工具產生的暫存檔
-data.xlsx
 tools/data.xlsx
-scraped_shops.json
-scraped_shops.xlsx
+tools/scraped_shops.json
+tools/scraped_shops.xlsx
 
 # 暫存 log
 tools/*_log.txt
 tools/check_*.txt
 
 # 開發殘留
-test_coords.py
-scrape_maps_list.py
+tools/test_coords.py
+tools/scrape_maps_list.py
 
 # 含 API Key，僅限本機
 tools/compare_hours.py
 tools/diff_report.csv
+tools/item_detail.csv
 tools/test_one_shop.json
+
+# 本機操作手冊（不納入版控）
+MANUAL.md
 
 # Python
 __pycache__/

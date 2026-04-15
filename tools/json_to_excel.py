@@ -20,7 +20,7 @@ except ImportError:
 
 tools_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir  = os.path.dirname(tools_dir)
-json_path = os.path.join(root_dir, 'data.json')
+json_path = os.path.join(root_dir, 'data', 'data.json')
 xlsx_path = os.path.join(tools_dir, 'data.xlsx')
 
 print('📂 讀取 data.json...')

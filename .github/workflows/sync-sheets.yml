@@ -6,7 +6,7 @@ on:
     - cron: '0 2 1 * *'     # 每月1日 02:00 更新行政區劃清單
   push:
     paths:
-      - 'data.json'          # 當 data.json 被手動推上來時，反向更新 Google Sheets
+      - 'data/data.json'          # 當 data.json 被手動推上來時，反向更新 Google Sheets
   workflow_dispatch:
     inputs:
       direction:
@@ -129,7 +129,7 @@ jobs:
                   if not str(row.get('鄉鎮市區','')).strip():
                       row['鄉鎮市區'] = dist
 
-          with open('data.json', 'w', encoding='utf-8') as f:
+          with open('data/data.json', 'w', encoding='utf-8') as f:
               json.dump(rows, f, ensure_ascii=False, indent=2)
 
           print(f'Done: {len(rows)} rows saved to data.json')
@@ -140,7 +140,7 @@ jobs:
           python3 << 'EOF'
           import json, time, requests, re
 
-          with open('data.json', 'r', encoding='utf-8') as f:
+          with open('data/data.json', 'r', encoding='utf-8') as f:
               rows = json.load(f)
 
           to_geocode = [r for r in rows if not r.get('lat') or not r.get('lng')]
@@ -200,7 +200,7 @@ jobs:
               time.sleep(1.1)
 
           if updated:
-              with open('data.json', 'w', encoding='utf-8') as f:
+              with open('data/data.json', 'w', encoding='utf-8') as f:
                   json.dump(rows, f, ensure_ascii=False, indent=2)
           print(f'Updated {updated} coordinates')
           EOF
@@ -209,7 +209,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json
+          git add data/data.json
           git diff --cached --quiet && echo "No changes" || git commit -m "Auto-sync from Google Sheets $(date '+%Y-%m-%d %H:%M') UTC"
 
           git push
@@ -232,7 +232,7 @@ jobs:
           sh = gc.open_by_key(SPREADSHEET_ID)
           ws = sh.worksheet('總表csv')
 
-          with open('data.json', 'r', encoding='utf-8') as f:
+          with open('data/data.json', 'r', encoding='utf-8') as f:
               rows = json.load(f)
 
           if not rows:
@@ -264,7 +264,7 @@ jobs:
           fi
 
           # 複製今日備份
-          cp data.json "/tmp/backups/${BACKUP_FILE}"
+          cp data/data.json "/tmp/backups/${BACKUP_FILE}"
 
           cd /tmp/backups
 
@@ -317,7 +317,7 @@ jobs:
           sh = gc.open_by_key(SPREADSHEET_ID)
           ws = sh.worksheet('總表csv')
 
-          with open('data.json', 'r', encoding='utf-8') as f:
+          with open('data/data.json', 'r', encoding='utf-8') as f:
               rows = json.load(f)
 
           if not rows:

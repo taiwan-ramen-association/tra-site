@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="icon/03.png">
+  <link rel="icon" href="assets/icons/03.png">
   <meta name="google-adsense-account" content="ca-pub-6476285123291834">
   <title>最新消息 | 台灣拉麵協會</title>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6476285123291834" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
   <style>
     main { max-width: 800px; margin: 0 auto; padding: 80px 24px 120px; }
     .page-title { font-family: 'Noto Serif TC', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; letter-spacing: 0.06em; margin-bottom: 56px; }
@@ -61,7 +61,7 @@
   </main>
 
   <script>
-    fetch('news.json?t=' + Date.now())
+    fetch('data/news.json?t=' + Date.now())
       .then(r => r.json())
       .then(data => {
         document.getElementById('status').remove();

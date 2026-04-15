@@ -28,7 +28,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 tools_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir  = os.path.dirname(tools_dir)
-json_path = os.path.join(root_dir, 'data.json')
+json_path = os.path.join(root_dir, 'data', 'data.json')
 dist_path = os.path.join(tools_dir, 'districts.json')
 
 # ── 共用 I/O ──────────────────────────────────────────────────────────────────
