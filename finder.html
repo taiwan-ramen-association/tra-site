@@ -292,45 +292,15 @@
   }
   .google-login-btn:hover { background: rgba(255,255,255,0.32); }
   .google-login-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  /* ── HEADER RIGHT ── */
+  .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .user-avatar {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.7);
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
     cursor: pointer; object-fit: cover; flex-shrink: 0;
+    transition: transform 0.15s;
   }
-  .drawer-user-info {
-    padding: 12px 20px; background: var(--red-light);
-    border-bottom: 1px solid var(--line);
-    font-size: 13px; color: var(--stone); line-height: 1.4;
-  }
-  .drawer-user-info strong { display: block; color: var(--ink); font-size: 14px; }
-  .drawer-profile-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .edit-profile-btn {
-    background: none; border: 1px solid var(--line); border-radius: 6px;
-    padding: 3px 8px; font-size: 12px; color: var(--stone); cursor: pointer;
-    white-space: nowrap; flex-shrink: 0;
-  }
-  .edit-profile-btn:hover { background: var(--line); }
-  .profile-edit-panel {
-    background: var(--paper); border-bottom: 1px solid var(--line);
-    padding: 12px 20px; display: none; flex-direction: column; gap: 8px;
-  }
-  .profile-edit-panel label { font-size: 12px; color: var(--stone); }
-  .profile-edit-panel input {
-    width: 100%; padding: 7px 10px; border: 1px solid var(--line);
-    border-radius: 7px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
-    background: var(--white); outline: none;
-  }
-  .profile-edit-panel input:focus { border-color: var(--red); }
-  .profile-edit-actions { display: flex; gap: 8px; }
-  .btn-save-profile {
-    flex: 1; padding: 7px; background: var(--red); color: white;
-    border: none; border-radius: 7px; font-size: 13px; cursor: pointer;
-  }
-  .btn-save-profile:hover { background: var(--red-dark); }
-  .btn-cancel-profile {
-    padding: 7px 14px; background: none; border: 1px solid var(--line);
-    border-radius: 7px; font-size: 13px; cursor: pointer; color: var(--stone);
-  }
+  .user-avatar:hover { transform: scale(1.08); }
   .hamburger-btn {
     background: rgba(255,255,255,0.18); border: none; color: white;
     border-radius: 8px; padding: 6px 10px; font-size: 18px; cursor: pointer;
@@ -338,10 +308,72 @@
   }
   .hamburger-btn:active { background: rgba(255,255,255,0.32); }
 
+  /* ── PROFILE DROPDOWN ── */
+  .profile-dropdown {
+    position: fixed; top: 52px; right: 52px; z-index: 99;
+    background: var(--white); border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18); width: 260px;
+    overflow: hidden;
+  }
+  .pd-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px; background: var(--red-light);
+    border-bottom: 1px solid var(--line);
+  }
+  .pd-header-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--line); flex-shrink: 0;
+  }
+  .pd-header-info strong { display: block; font-size: 14px; color: var(--ink); }
+  .pd-header-info span { font-size: 12px; color: var(--stone); }
+
+  .pd-section { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .pd-section label { display: block; font-size: 11px; color: var(--stone); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pd-section input {
+    width: 100%; padding: 7px 10px; border: 1.5px solid var(--line);
+    border-radius: 8px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+    background: var(--paper); outline: none;
+  }
+  .pd-section input:focus { border-color: var(--red); }
+
+  .pd-avatar-editor { display: flex; align-items: center; gap: 12px; }
+  .pd-avatar-big {
+    width: 52px; height: 52px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--line); flex-shrink: 0;
+  }
+  .pd-avatar-btns { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .pd-avatar-btn {
+    padding: 6px 10px; border: 1.5px solid var(--line); border-radius: 8px;
+    font-size: 12px; font-family: 'Noto Sans TC', sans-serif;
+    background: var(--white); cursor: pointer; color: var(--ink); text-align: left;
+  }
+  .pd-avatar-btn:hover { background: var(--paper); border-color: var(--stone); }
+
+  .pd-save-btn {
+    display: block; width: calc(100% - 32px); margin: 12px 16px;
+    padding: 10px; background: var(--red); color: white;
+    border: none; border-radius: 10px; font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif; cursor: pointer; font-weight: 500;
+  }
+  .pd-save-btn:hover { background: var(--red-dark); }
+  .pd-save-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .pd-action {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 13px 16px; border: none; background: none;
+    font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+    color: var(--ink); cursor: pointer; text-align: left;
+    text-decoration: none; box-sizing: border-box;
+    border-top: 1px solid var(--line);
+  }
+  .pd-action:hover { background: var(--paper); }
+  .pd-action.danger { color: #c0392b; }
+  .pd-action.active { color: var(--red); font-weight: 500; background: var(--red-light); }
+
   /* ── DRAWER ── */
   .drawer-backdrop { position: fixed; inset: 0; z-index: 98; }
   .drawer {
-    position: fixed; top: 44px; right: 0; z-index: 99;
+    position: fixed; top: 52px; right: 0; z-index: 99;
     background: var(--white); border-radius: 0 0 0 12px;
     box-shadow: -2px 4px 20px rgba(0,0,0,0.18); min-width: 160px;
     overflow: hidden;
@@ -404,42 +436,59 @@
 <body>
 
 <header>
-  <h1>🍜 台灣拉麵協會－拉麵搜尋器</h1>
-  <button class="google-login-btn" id="loginBtn">
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57C21.36 18.5 22.56 15.68 22.56 12.25z"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    </svg>
-    登入
-  </button>
-  <img class="user-avatar" id="userAvatar" style="display:none" title="點擊登出">
-  <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+  <h1>🍜 台灣拉麵協會－拉麵搜尋器 <span style="font-size:11px;background:rgba(255,255,255,0.25);padding:2px 7px;border-radius:10px;font-weight:400;letter-spacing:0;"></span></h1>
+  <div class="header-right">
+    <button class="google-login-btn" id="loginBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57C21.36 18.5 22.56 15.68 22.56 12.25z"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      登入
+    </button>
+    <img class="user-avatar" id="userAvatar" style="display:none">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+  </div>
 </header>
+
+<!-- Profile Dropdown（點頭像展開） -->
+<div class="profile-dropdown" id="profileDropdown" style="display:none">
+  <div class="pd-header">
+    <img class="pd-header-avatar" id="pdHeaderAvatar" src="">
+    <div class="pd-header-info">
+      <strong id="pdDisplayName"></strong>
+      <span id="pdEmail"></span>
+    </div>
+  </div>
+
+  <button class="pd-action" id="favFilterBtn" style="display:none">♥ 收藏清單</button>
+
+  <div class="pd-section">
+    <label>顯示名稱</label>
+    <input id="nicknameInput" type="text" maxlength="20" placeholder="輸入綽號（最多 20 字）">
+  </div>
+
+  <div class="pd-section">
+    <label>頭像</label>
+    <div class="pd-avatar-editor">
+      <img class="pd-avatar-big" id="pdAvatarPreview" src="">
+      <div class="pd-avatar-btns">
+        <button class="pd-avatar-btn" id="rollAvatarBtn">🎲 隨機換頭像</button>
+        <button class="pd-avatar-btn" id="resetAvatarBtn">↩ 還原 Google 預設</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="pd-save-btn" id="saveProfileBtn">儲存</button>
+
+  <a class="pd-action" id="adminLink" href="admin.html" style="display:none">⚙️ 會員管理</a>
+  <button class="pd-action danger" id="logoutBtn">🚪 登出</button>
+</div>
+
 <div class="drawer-backdrop" id="drawerBackdrop" style="display:none"></div>
 <div class="drawer" id="drawer" style="display:none">
-  <div class="drawer-user-info" id="drawerUserInfo" style="display:none">
-    <div class="drawer-profile-row">
-      <div>
-        <strong id="drawerUserName"></strong>
-        <span id="drawerUserEmail"></span>
-      </div>
-      <button class="edit-profile-btn" id="editProfileBtn">✏️ 編輯</button>
-    </div>
-  </div>
-  <div class="profile-edit-panel" id="profileEditPanel">
-    <label>顯示名稱（綽號）</label>
-    <input id="nicknameInput" type="text" placeholder="最多 20 字" maxlength="20">
-    <div class="profile-edit-actions">
-      <button class="btn-save-profile" id="saveProfileBtn">儲存</button>
-      <button class="btn-cancel-profile" id="cancelProfileBtn">取消</button>
-    </div>
-  </div>
-  <button class="drawer-item" id="favFilterBtn">♥ 收藏清單</button>
   <button class="drawer-item" id="resetBdSkipBtn">🎂 重設壽星通知</button>
-  <a class="drawer-item" id="adminLink" href="admin.html" style="display:none">⚙️ 會員管理</a>
-  <button class="drawer-item" id="logoutBtn" style="display:none">🚪 登出</button>
   <a class="drawer-item" href="index.html">🏠 回首頁</a>
 </div>
 
@@ -510,12 +559,24 @@ let serverTimeOffset = 0;
 let selectedDay      = '';
 let isNowOpen        = false;
 let showFavOnly      = false;
-let favSet           = new Set(JSON.parse(localStorage.getItem('tw-ramen-favs') || '[]'));
+let favSet           = new Set();   // 儲存 shop ID，由 Firestore 載入
 const BD_SKIP_KEY    = 'tw-ramen-bd-skip';
 
 function serverNow() { return new Date(Date.now() + serverTimeOffset); }
-function saveFavs()  { localStorage.setItem('tw-ramen-favs', JSON.stringify([...favSet])); }
 function escapeAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+async function toggleFav(shopId) {
+  const user = typeof auth !== 'undefined' && auth.currentUser;
+  if (!user || !shopId) return;
+  const ref = db.collection('users').doc(user.uid);
+  if (favSet.has(shopId)) {
+    favSet.delete(shopId);
+    await ref.update({ favorites: firebase.firestore.FieldValue.arrayRemove(shopId) });
+  } else {
+    favSet.add(shopId);
+    await ref.update({ favorites: firebase.firestore.FieldValue.arrayUnion(shopId) });
+  }
+}
 
 let expandedCard = null;
 let currentView  = 'list';
@@ -697,7 +758,7 @@ function getFiltered() {
   selectedDay   = document.getElementById('dayFilter').value;
 
   const result = ALL_DATA.filter(shop => {
-    if (showFavOnly && !favSet.has(shop['店名'])) return false;
+    if (showFavOnly && !favSet.has(shop['ID'])) return false;
     if (city && shop['縣市'] !== city) return false;
 
     if (selectedDay) {
@@ -1008,7 +1069,7 @@ function renderCard(shop) {
         ${shop['會員'] === 'Y' ? '<span class="member-badge">MEMBER SHOP</span>' : ''}
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
-        <button class="fav-btn" data-name="${escapeAttr(shop['店名'])}">${favSet.has(shop['店名']) ? '♥' : '♡'}</button>
+        <button class="fav-btn" data-id="${escapeAttr(shop['ID'] || '')}">${favSet.has(shop['ID']) ? '♥' : '♡'}</button>
       </div>
     </div>
     <div class="card-meta">
@@ -1056,12 +1117,12 @@ function render() {
     });
   });
   list.querySelectorAll('.fav-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', async e => {
       e.stopPropagation();
-      const name = btn.dataset.name;
-      if (favSet.has(name)) { favSet.delete(name); btn.textContent = '♡'; }
-      else { favSet.add(name); btn.textContent = '♥'; }
-      saveFavs();
+      const id = btn.dataset.id;
+      if (!id) return;
+      await toggleFav(id);
+      btn.textContent = favSet.has(id) ? '♥' : '♡';
       if (showFavOnly) render();
     });
   });
@@ -1102,8 +1163,7 @@ document.getElementById('drawerBackdrop').addEventListener('click', () => {
 document.getElementById('favFilterBtn').addEventListener('click', () => {
   showFavOnly = !showFavOnly;
   document.getElementById('favFilterBtn').classList.toggle('active', showFavOnly);
-  document.getElementById('drawer').style.display   = 'none';
-  document.getElementById('drawerBackdrop').style.display = 'none';
+  closeProfileDropdown();
   render();
 });
 document.getElementById('resetBdSkipBtn').addEventListener('click', () => {
@@ -1399,33 +1459,109 @@ const auth     = firebase.auth();
 const db       = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-const loginBtn        = document.getElementById('loginBtn');
-const userAvatar      = document.getElementById('userAvatar');
-const drawerUserInfo  = document.getElementById('drawerUserInfo');
-const drawerUserName  = document.getElementById('drawerUserName');
-const drawerUserEmail = document.getElementById('drawerUserEmail');
-const logoutBtn       = document.getElementById('logoutBtn');
-const adminLink       = document.getElementById('adminLink');
-const editProfileBtn  = document.getElementById('editProfileBtn');
-const profileEditPanel= document.getElementById('profileEditPanel');
-const nicknameInput   = document.getElementById('nicknameInput');
-const saveProfileBtn  = document.getElementById('saveProfileBtn');
-const cancelProfileBtn= document.getElementById('cancelProfileBtn');
+const loginBtn         = document.getElementById('loginBtn');
+const userAvatar       = document.getElementById('userAvatar');
+const logoutBtn        = document.getElementById('logoutBtn');
+const adminLink        = document.getElementById('adminLink');
+const profileDropdown  = document.getElementById('profileDropdown');
+const pdHeaderAvatar   = document.getElementById('pdHeaderAvatar');
+const pdDisplayName    = document.getElementById('pdDisplayName');
+const pdEmail          = document.getElementById('pdEmail');
+const pdAvatarPreview  = document.getElementById('pdAvatarPreview');
+const nicknameInput    = document.getElementById('nicknameInput');
+const saveProfileBtn   = document.getElementById('saveProfileBtn');
+const rollAvatarBtn    = document.getElementById('rollAvatarBtn');
+const resetAvatarBtn   = document.getElementById('resetAvatarBtn');
 
-// 登入狀態變化時更新 UI，並同步 Firestore 用戶文件
+let _googlePhotoURL = '';   // 保存 Google 原始頭像
+let _pendingAvatar  = null; // 暫存尚未儲存的頭像選擇（null = 未修改）
+
+function getAvatarUrl(userData, googlePhotoURL) {
+  return userData?.avatarUrl || googlePhotoURL || 'assets/icons/03.png';
+}
+
+function dicebearUrl(seed) {
+  return `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}`;
+}
+
+function closeProfileDropdown() {
+  profileDropdown.style.display = 'none';
+  _pendingAvatar = null;
+}
+
+// 點頭像 toggle profile dropdown，關閉 drawer
+userAvatar.addEventListener('click', e => {
+  e.stopPropagation();
+  const isOpen = profileDropdown.style.display !== 'none';
+  if (isOpen) {
+    closeProfileDropdown();
+  } else {
+    // 關閉 drawer 若開著
+    document.getElementById('drawer').style.display = 'none';
+    document.getElementById('drawerBackdrop').style.display = 'none';
+    profileDropdown.style.display = 'block';
+    _pendingAvatar = null;
+  }
+});
+
+// 點頁面其他地方關閉 profile dropdown
+document.addEventListener('click', e => {
+  if (!profileDropdown.contains(e.target) && e.target !== userAvatar) {
+    closeProfileDropdown();
+  }
+});
+
+// 🎲 隨機 DiceBear
+rollAvatarBtn.addEventListener('click', () => {
+  const seed = Math.random().toString(36).slice(2, 10);
+  _pendingAvatar = dicebearUrl(seed);
+  pdAvatarPreview.src = _pendingAvatar;
+});
+
+// ↩ 還原 Google 預設
+resetAvatarBtn.addEventListener('click', () => {
+  _pendingAvatar = _googlePhotoURL || '';
+  pdAvatarPreview.src = _pendingAvatar || 'assets/icons/03.png';
+});
+
+// 💾 儲存
+saveProfileBtn.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  saveProfileBtn.disabled = true;
+  saveProfileBtn.textContent = '儲存中…';
+  try {
+    const updates = { nickname: nicknameInput.value.trim() };
+    if (_pendingAvatar !== null) updates.avatarUrl = _pendingAvatar;
+    await db.collection('users').doc(user.uid).update(updates);
+    // 更新 header 頭像
+    const finalAvatar = _pendingAvatar ?? userAvatar.src;
+    userAvatar.src       = finalAvatar;
+    pdHeaderAvatar.src   = finalAvatar;
+    pdDisplayName.textContent = updates.nickname || user.displayName || '';
+    _pendingAvatar = null;
+    closeProfileDropdown();
+  } catch (e) {
+    console.error('儲存失敗', e);
+  }
+  saveProfileBtn.disabled = false;
+  saveProfileBtn.textContent = '儲存';
+});
+
+// 登出
+logoutBtn.addEventListener('click', () => {
+  closeProfileDropdown();
+  auth.signOut();
+});
+
+// ── onAuthStateChanged ─────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
   try {
     if (user) {
-      // DiceBear 頭像：從 uid 生成，保護真實身份
-      const dicebearUrl = `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${user.uid}`;
-      loginBtn.style.display        = 'none';
-      userAvatar.style.display      = 'block';
-      userAvatar.src                = dicebearUrl;
-      drawerUserInfo.style.display  = 'block';
-      drawerUserEmail.textContent   = user.email || '';
-      logoutBtn.style.display       = 'block';
+      _googlePhotoURL = user.photoURL || '';
+      loginBtn.style.display = 'none';
+      userAvatar.style.display = 'block';
 
-      // 寫入 / 更新 Firestore users 文件（merge 模式：不覆蓋現有欄位）
       const userRef    = db.collection('users').doc(user.uid);
       const counterRef = db.collection('meta').doc('counters');
       await userRef.set({
@@ -1435,115 +1571,72 @@ auth.onAuthStateChanged(async user => {
         lastLogin:   firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      // 讀取用戶資料
       const snap     = await userRef.get();
       const userData = snap.data();
 
-      // 第一次登入：用 transaction 分配流水號並寫入預設欄位
+      // 第一次登入：分配流水號 + 預設欄位
       if (!userData.role) {
         await db.runTransaction(async tx => {
-          const counterSnap = await tx.get(counterRef);
-          const memberNo = counterSnap.exists
-            ? counterSnap.data().memberCount + 1
-            : 1;
-          if (counterSnap.exists) {
-            tx.update(counterRef, { memberCount: memberNo });
-          } else {
-            tx.set(counterRef, { memberCount: 1 });
-          }
+          const cs = await tx.get(counterRef);
+          const memberNo = cs.exists ? cs.data().memberCount + 1 : 1;
+          cs.exists
+            ? tx.update(counterRef, { memberCount: memberNo })
+            : tx.set(counterRef, { memberCount: 1 });
           tx.update(userRef, {
-            role:      'viewer',
-            level:     0,
-            postCount: 0,
-            likeCount: 0,
-            memberNo,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            role: 'viewer', level: 0, postCount: 0, likeCount: 0,
+            memberNo, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
         });
-        // 重讀取得 memberNo
         const snap2 = await userRef.get();
         Object.assign(userData, snap2.data());
       }
 
-      // 顯示 nickname（優先）或 Google displayName
-      drawerUserName.textContent = userData.nickname || user.displayName || '';
-      nicknameInput.value        = userData.nickname || '';
+      // 頭像：優先用 Firestore avatarUrl，否則 Google 照片
+      const avatar = getAvatarUrl(userData, user.photoURL);
+      userAvatar.src       = avatar;
+      pdHeaderAvatar.src   = avatar;
+      pdAvatarPreview.src  = avatar;
+      pdDisplayName.textContent = userData.nickname || user.displayName || '';
+      pdEmail.textContent       = user.email || '';
+      nicknameInput.value       = userData.nickname || '';
+      adminLink.style.display   = userData.role === 'admin' ? 'flex' : 'none';
 
-      // admin 才顯示管理連結
-      adminLink.style.display = userData.role === 'admin' ? 'flex' : 'none';
+      // 載入收藏清單（Firestore favorites 陣列）
+      const favIds = userData.favorites || [];
+      favSet = new Set(favIds);
+      document.getElementById('favFilterBtn').style.display = 'flex';
+      render();
     } else {
-      loginBtn.style.display        = 'flex';
-      userAvatar.style.display      = 'none';
-      drawerUserInfo.style.display  = 'none';
-      logoutBtn.style.display       = 'none';
-      adminLink.style.display       = 'none';
-      profileEditPanel.style.display= 'none';
+      loginBtn.style.display   = 'flex';
+      userAvatar.style.display = 'none';
+      favSet = new Set();
+      document.getElementById('favFilterBtn').style.display = 'none';
+      showFavOnly = false;
+      document.getElementById('favFilterBtn').classList.remove('active');
+      closeProfileDropdown();
+      render();
     }
   } catch (err) {
     console.error('auth state 處理失敗', err);
-    loginBtn.style.display        = 'flex';
-    userAvatar.style.display      = 'none';
-    drawerUserInfo.style.display  = 'none';
-    logoutBtn.style.display       = 'none';
-    adminLink.style.display       = 'none';
+    loginBtn.style.display   = 'flex';
+    userAvatar.style.display = 'none';
   }
 });
 
-// ── Profile 編輯面板 ────────────────────────────────────────────────────────
-editProfileBtn.addEventListener('click', () => {
-  const isOpen = profileEditPanel.style.display === 'flex';
-  profileEditPanel.style.display = isOpen ? 'none' : 'flex';
-});
-
-cancelProfileBtn.addEventListener('click', () => {
-  profileEditPanel.style.display = 'none';
-});
-
-saveProfileBtn.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-  const nickname = nicknameInput.value.trim();
-  saveProfileBtn.disabled = true;
-  saveProfileBtn.textContent = '…';
-  try {
-    await db.collection('users').doc(user.uid).update({ nickname });
-    drawerUserName.textContent = nickname || user.displayName || '';
-    profileEditPanel.style.display = 'none';
-  } catch (e) {
-    console.error('儲存失敗', e);
-  }
-  saveProfileBtn.disabled = false;
-  saveProfileBtn.textContent = '儲存';
-});
-
-// iOS Safari 的 ITP 會阻擋 redirect flow，只有 Android 才用 redirect
+// ── Login ──────────────────────────────────────────────────────────────────
 const isAndroid = /Android/i.test(navigator.userAgent);
-
 loginBtn.addEventListener('click', () => {
   if (isAndroid) {
     auth.signInWithRedirect(provider).catch(err => console.error('登入失敗', err));
   } else {
-    // iOS Safari 及桌面均使用 popup
     auth.signInWithPopup(provider).catch(err => {
       if (err.code !== 'auth/popup-closed-by-user') console.error('登入失敗', err);
     });
   }
 });
-
-// Android redirect 回來時處理結果（錯誤時登出殘留 session 避免卡死）
 if (isAndroid) {
-  auth.getRedirectResult().catch(err => {
-    console.error('redirect 登入失敗', err);
-    auth.signOut();
-  });
+  auth.getRedirectResult().catch(err => { console.error(err); auth.signOut(); });
 }
-
-userAvatar.addEventListener('click', () => auth.signOut());
-logoutBtn.addEventListener('click', () => {
-  auth.signOut();
-  document.getElementById('drawer').style.display          = 'none';
-  document.getElementById('drawerBackdrop').style.display  = 'none';
-});
 
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData();
