@@ -123,7 +123,10 @@
 
 <header>
   <h1>🍜 台灣拉麵協會 ─ 會員管理</h1>
-  <a href="finder.html">← 回查詢頁</a>
+  <div style="display:flex;gap:16px;align-items:center">
+    <a href="finder-beta.html" target="_blank" style="color:#ffd;font-size:13px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:6px;">🧪 開啟 BETA</a>
+    <a href="finder.html">← 回查詢頁</a>
+  </div>
 </header>
 
 <!-- 未登入 / 非管理員畫面 -->
@@ -155,6 +158,7 @@
   <table id="userTable" style="display:none">
     <thead>
       <tr>
+        <th>#</th>
         <th>用戶</th>
         <th>Email</th>
         <th>目前身份</th>
@@ -239,7 +243,7 @@ auth.onAuthStateChanged(async user => {
 });
 
 async function loadUsers() {
-  const snap = await db.collection('users').orderBy('lastLogin', 'desc').get();
+  const snap = await db.collection('users').orderBy('memberNo', 'asc').get();
   allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
   renderTable(allUsers);
 }
@@ -263,12 +267,17 @@ function renderTable(users) {
     const roleOptions = ROLES.map(r =>
       `<option value="${r.value}" ${u.role === r.value ? 'selected' : ''}>${r.label}</option>`
     ).join('');
+    const dicebearUrl = `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${u.uid}`;
+    const displayName = u.nickname
+      ? `${u.nickname} <span style="color:#aaa;font-size:11px">(${u.displayName || ''})</span>`
+      : (u.displayName || '（未命名）');
     return `
       <tr data-uid="${u.uid}">
+        <td style="color:var(--stone);font-size:12px;white-space:nowrap">${u.memberNo ?? '─'}</td>
         <td>
           <div class="name-cell">
-            <img class="avatar" src="${u.photoURL || 'assets/icons/03.png'}" onerror="this.src='assets/icons/03.png'">
-            ${u.displayName || '（未命名）'}
+            <img class="avatar" src="${dicebearUrl}">
+            ${displayName}
           </div>
         </td>
         <td>${u.email || '─'}</td>
