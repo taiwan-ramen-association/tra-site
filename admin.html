@@ -159,7 +159,8 @@
     <thead>
       <tr>
         <th>#</th>
-        <th>用戶</th>
+        <th>Google 帳號</th>
+        <th>顯示身份</th>
         <th>Email</th>
         <th>目前身份</th>
         <th>等級</th>
@@ -269,17 +270,22 @@ function renderTable(users) {
     const roleOptions = ROLES.map(r =>
       `<option value="${r.value}" ${u.role === r.value ? 'selected' : ''}>${r.label}</option>`
     ).join('');
-    const dicebearUrl = `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${u.uid}`;
-    const displayName = u.nickname
-      ? `${u.nickname} <span style="color:#aaa;font-size:11px">(${u.displayName || ''})</span>`
-      : (u.displayName || '（未命名）');
+    const googleAvatar  = u.photoURL || 'assets/icons/03.png';
+    const customAvatar  = u.avatarUrl || googleAvatar;
+    const nickname      = u.nickname || '<span style="color:#bbb;font-style:italic">未設定</span>';
     return `
       <tr data-uid="${u.uid}">
         <td style="color:var(--stone);font-size:12px;white-space:nowrap">${u.memberNo ?? '─'}</td>
         <td>
           <div class="name-cell">
-            <img class="avatar" src="${dicebearUrl}">
-            ${displayName}
+            <img class="avatar" src="${googleAvatar}" onerror="this.src='assets/icons/03.png'">
+            ${u.displayName || '（未命名）'}
+          </div>
+        </td>
+        <td>
+          <div class="name-cell">
+            <img class="avatar" src="${customAvatar}" onerror="this.src='assets/icons/03.png'">
+            ${nickname}
           </div>
         </td>
         <td>${u.email || '─'}</td>
