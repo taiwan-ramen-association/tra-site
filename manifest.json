@@ -1,0 +1,24 @@
+{
+  "name": "台灣拉麵協會 店家查詢",
+  "short_name": "拉麵搜尋器",
+  "description": "搜尋台灣各地拉麵店家，查詢營業時間與位置",
+  "start_url": "/finder.html",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#C8272D",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "assets/icons/03.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/03.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
