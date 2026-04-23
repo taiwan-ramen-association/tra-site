@@ -405,6 +405,88 @@
     color: var(--red); flex-shrink: 0;
   }
 
+  /* ── STAMP BUTTON ── */
+  .stamp-btn {
+    border: none; background: none; cursor: pointer;
+    font-size: 17px; padding: 0 2px; line-height: 1;
+    flex-shrink: 0; opacity: 0.25; transition: opacity 0.15s;
+  }
+  .stamp-btn.can-stamp { opacity: 0.45; cursor: pointer; }
+  .stamp-btn.stamped   { opacity: 1; }
+
+  /* ── STAMP MODAL ── */
+  .stamp-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 600; display: none;
+  }
+  .stamp-modal {
+    position: fixed; z-index: 601;
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(360px, calc(100vw - 32px));
+    background: var(--white); border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    padding: 20px; display: none;
+  }
+  .sm-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 16px; gap: 10px;
+  }
+  .sm-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px; font-weight: 700; line-height: 1.4; flex: 1;
+  }
+  .sm-reset-btn {
+    border: 1px solid #ddd; background: none; cursor: pointer;
+    font-size: 11px; color: var(--stone); padding: 3px 8px;
+    border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .sm-reset-btn:hover { border-color: #c00; color: #c00; }
+  .sm-statuses {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 5px; margin-bottom: 12px;
+  }
+  .sm-status-btn {
+    border: 1.5px solid var(--line); background: var(--paper);
+    border-radius: 10px; padding: 8px 3px;
+    font-size: 11px; font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer; text-align: center; line-height: 1.4;
+    transition: all 0.15s; color: var(--ink);
+  }
+  .sm-status-btn small { display: block; color: var(--stone); font-size: 10px; margin-top: 3px; }
+  .sm-status-btn:hover:not(.selected) { border-color: var(--red); color: var(--red); }
+  .sm-status-btn.selected { border-color: var(--red); background: var(--red); color: #fff; }
+  .sm-status-btn.selected small { color: rgba(255,255,255,0.75); }
+  .sm-extras {
+    display: flex; gap: 8px; margin-bottom: 14px;
+  }
+  .sm-extra {
+    flex: 1; border: 1.5px dashed var(--line);
+    border-radius: 10px; padding: 10px 6px;
+    font-size: 11px; text-align: center; color: #bbb;
+    line-height: 1.6; background: #f8f8f8; pointer-events: none;
+  }
+  .sm-extra small { display: block; font-size: 10px; }
+  .sm-footer { display: flex; gap: 8px; }
+  .sm-btn {
+    flex: 1; padding: 11px; border: none; border-radius: 10px;
+    font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  }
+  .sm-cancel  { background: var(--line); color: var(--stone); }
+  .sm-cancel:hover  { background: #d0c8bc; }
+  .sm-confirm { background: var(--red); color: #fff; }
+  .sm-confirm:hover { background: var(--red-dark); }
+
+  /* ── TOAST ── */
+  #stampToast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 8px 18px; border-radius: 8px;
+    font-size: 13px; z-index: 700; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  #stampToast.show { opacity: 1; }
+
   .map-ctrl-btn {
     width: 34px; height: 34px; border-radius: 6px;
     border: 2px solid rgba(0,0,0,0.2); background: white;
@@ -482,6 +564,7 @@
 
   <button class="pd-save-btn" id="saveProfileBtn">儲存</button>
 
+  <a class="pd-action" href="domination.html">🗾 制霸地圖</a>
   <a class="pd-action" id="adminLink" href="admin.html" style="display:none">⚙️ 會員管理</a>
   <button class="pd-action danger" id="logoutBtn">🚪 登出</button>
 </div>
@@ -491,6 +574,31 @@
   <button class="drawer-item" id="resetBdSkipBtn">🎂 重設壽星通知</button>
   <a class="drawer-item" href="index.html">🏠 回首頁</a>
 </div>
+
+<!-- Stamp Modal -->
+<div id="stampBackdrop" class="stamp-backdrop"></div>
+<div id="stampModal" class="stamp-modal">
+  <div class="sm-header">
+    <div class="sm-title" id="smTitle"></div>
+    <button class="sm-reset-btn" id="smResetBtn">↺ 重置採點</button>
+  </div>
+  <div class="sm-statuses">
+    <button class="sm-status-btn" data-val="0">沒去過<small>0 分</small></button>
+    <button class="sm-status-btn" data-val="1">路過<small>1 分</small></button>
+    <button class="sm-status-btn" data-val="2">吃過<br>1次<small>3 分</small></button>
+    <button class="sm-status-btn" data-val="3">吃過<br>很多次<small>10 分</small></button>
+    <button class="sm-status-btn" data-val="4">從業過<small>20 分</small></button>
+  </div>
+  <div class="sm-extras">
+    <div class="sm-extra">✏️ 寫20字心得<small>敬請期待</small></div>
+    <div class="sm-extra">📷 上傳拉麵照<small>敬請期待</small></div>
+  </div>
+  <div class="sm-footer">
+    <button class="sm-btn sm-cancel" id="smCancelBtn">取消</button>
+    <button class="sm-btn sm-confirm" id="smConfirmBtn">確認採點</button>
+  </div>
+</div>
+<div id="stampToast"></div>
 
 <div id="loadingScreen" class="loading-screen">
   <div class="loader"></div>
@@ -1070,6 +1178,7 @@ function renderCard(shop) {
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
         <button class="fav-btn" data-id="${escapeAttr(shop['ID'] || '')}">${favSet.has(shop['ID']) ? '♥' : '♡'}</button>
+        <button class="stamp-btn${auth.currentUser ? ' can-stamp' : ''}${stampMap[shop['ID']] != null ? ' stamped' : ''}" data-id="${escapeAttr(shop['ID'] || '')}" data-name="${escapeAttr(shop['店名'] || '')}" title="採點">👣</button>
       </div>
     </div>
     <div class="card-meta">
@@ -1109,7 +1218,7 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a') || e.target.closest('.fav-btn')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
@@ -1124,6 +1233,12 @@ function render() {
       await toggleFav(id);
       btn.textContent = favSet.has(id) ? '♥' : '♡';
       if (showFavOnly) render();
+    });
+  });
+  list.querySelectorAll('.stamp-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openStampModal(btn.dataset.id, btn.dataset.name);
     });
   });
 }
@@ -1554,6 +1669,89 @@ logoutBtn.addEventListener('click', () => {
   auth.signOut();
 });
 
+// ── Stamp (採點) ───────────────────────────────────────────────────────────
+let stampMap = {};
+let _stampShopId = null;
+let _stampShopName = '';
+let _stampVal = 2;
+
+function showStampToast(msg) {
+  const t = document.getElementById('stampToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function loadStamps(uid) {
+  const snap = await db.collection('userVisits').doc(uid).get();
+  stampMap = snap.exists ? (snap.data().visits || {}) : {};
+}
+
+function openStampModal(shopId, shopName) {
+  if (!auth.currentUser) { showStampToast('請先登入才能採點'); return; }
+  _stampShopId   = shopId;
+  _stampShopName = shopName;
+  _stampVal      = stampMap[shopId] != null ? stampMap[shopId] : 2;
+  document.getElementById('smTitle').textContent = shopName;
+  updateSmBtns();
+  document.getElementById('stampBackdrop').style.display = 'block';
+  document.getElementById('stampModal').style.display   = 'block';
+}
+
+function closeStampModal() {
+  document.getElementById('stampBackdrop').style.display = 'none';
+  document.getElementById('stampModal').style.display   = 'none';
+}
+
+function updateSmBtns() {
+  document.querySelectorAll('.sm-status-btn').forEach(b =>
+    b.classList.toggle('selected', parseInt(b.dataset.val) === _stampVal)
+  );
+}
+
+document.getElementById('stampBackdrop').addEventListener('click', closeStampModal);
+document.getElementById('smCancelBtn').addEventListener('click', closeStampModal);
+
+document.querySelectorAll('.sm-status-btn').forEach(b => {
+  b.addEventListener('click', () => { _stampVal = parseInt(b.dataset.val); updateSmBtns(); });
+});
+
+document.getElementById('smConfirmBtn').addEventListener('click', async () => {
+  const shopId = _stampShopId;
+  if (!shopId || !auth.currentUser) return;
+  stampMap[shopId] = _stampVal;
+  try {
+    await db.collection('userVisits').doc(auth.currentUser.uid).set(
+      { visits: { [shopId]: _stampVal } }, { merge: true }
+    );
+    document.querySelectorAll(`.stamp-btn[data-id="${shopId}"]`).forEach(b => {
+      b.classList.add('stamped');
+      b.dataset.val = _stampVal;
+    });
+    closeStampModal();
+    const labels = ['沒去過','路過','吃過1次','吃過很多次','從業過'];
+    showStampToast(`✓ 已採點：${labels[_stampVal]}`);
+  } catch (e) { showStampToast('採點失敗：' + e.message); }
+});
+
+document.getElementById('smResetBtn').addEventListener('click', async () => {
+  if (!confirm(`確定要清除「${_stampShopName}」的採點記錄嗎？\n此操作無法復原。`)) return;
+  const shopId = _stampShopId;
+  if (!shopId || !auth.currentUser) return;
+  delete stampMap[shopId];
+  try {
+    await db.collection('userVisits').doc(auth.currentUser.uid).update({
+      [`visits.${shopId}`]: firebase.firestore.FieldValue.delete()
+    });
+    document.querySelectorAll(`.stamp-btn[data-id="${shopId}"]`).forEach(b => {
+      b.classList.remove('stamped');
+    });
+    closeStampModal();
+    showStampToast('已清除採點記錄');
+  } catch (e) { showStampToast('重置失敗：' + e.message); }
+});
+
 // ── onAuthStateChanged ─────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
   try {
@@ -1601,15 +1799,17 @@ auth.onAuthStateChanged(async user => {
       nicknameInput.value       = userData.nickname || '';
       adminLink.style.display   = userData.role === 'admin' ? 'flex' : 'none';
 
-      // 載入收藏清單（Firestore favorites 陣列）
+      // 載入收藏清單 + 採點記錄
       const favIds = userData.favorites || [];
       favSet = new Set(favIds);
       document.getElementById('favFilterBtn').style.display = 'flex';
+      await loadStamps(user.uid);
       render();
     } else {
       loginBtn.style.display   = 'flex';
       userAvatar.style.display = 'none';
       favSet = new Set();
+      stampMap = {};
       document.getElementById('favFilterBtn').style.display = 'none';
       showFavOnly = false;
       document.getElementById('favFilterBtn').classList.remove('active');
