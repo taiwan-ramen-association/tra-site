@@ -1624,19 +1624,23 @@ auth.onAuthStateChanged(async user => {
 });
 
 // ── Login ──────────────────────────────────────────────────────────────────
-const isAndroid = /Android/i.test(navigator.userAgent);
+// 優先 popup（所有平台），被擋住才 fallback 到 redirect
 loginBtn.addEventListener('click', () => {
-  if (isAndroid) {
-    auth.signInWithRedirect(provider).catch(err => console.error('登入失敗', err));
-  } else {
-    auth.signInWithPopup(provider).catch(err => {
-      if (err.code !== 'auth/popup-closed-by-user') console.error('登入失敗', err);
-    });
+  auth.signInWithPopup(provider).catch(err => {
+    if (err.code === 'auth/popup-blocked') {
+      auth.signInWithRedirect(provider).catch(e => console.error('redirect 登入失敗', e));
+    } else if (err.code !== 'auth/popup-closed-by-user') {
+      console.error('登入失敗', err);
+    }
+  });
+});
+// 處理 redirect fallback 的回傳結果
+auth.getRedirectResult().catch(err => {
+  if (err.code && err.code !== 'auth/no-auth-event') {
+    console.error('redirect 登入失敗', err);
+    auth.signOut();
   }
 });
-if (isAndroid) {
-  auth.getRedirectResult().catch(err => { console.error(err); auth.signOut(); });
-}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData();

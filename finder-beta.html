@@ -368,6 +368,7 @@
   }
   .pd-action:hover { background: var(--paper); }
   .pd-action.danger { color: #c0392b; }
+  .pd-action.active { color: var(--red); font-weight: 500; background: var(--red-light); }
 
   /* ── DRAWER ── */
   .drawer-backdrop { position: fixed; inset: 0; z-index: 98; }
@@ -461,6 +462,8 @@
     </div>
   </div>
 
+  <button class="pd-action" id="favFilterBtn" style="display:none">♥ 收藏清單</button>
+
   <div class="pd-section">
     <label>顯示名稱</label>
     <input id="nicknameInput" type="text" maxlength="20" placeholder="輸入綽號（最多 20 字）">
@@ -485,7 +488,6 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" style="display:none"></div>
 <div class="drawer" id="drawer" style="display:none">
-  <button class="drawer-item" id="favFilterBtn" style="display:none">♥ 收藏清單</button>
   <button class="drawer-item" id="resetBdSkipBtn">🎂 重設壽星通知</button>
   <a class="drawer-item" href="index.html">🏠 回首頁</a>
 </div>
@@ -1161,8 +1163,7 @@ document.getElementById('drawerBackdrop').addEventListener('click', () => {
 document.getElementById('favFilterBtn').addEventListener('click', () => {
   showFavOnly = !showFavOnly;
   document.getElementById('favFilterBtn').classList.toggle('active', showFavOnly);
-  document.getElementById('drawer').style.display   = 'none';
-  document.getElementById('drawerBackdrop').style.display = 'none';
+  closeProfileDropdown();
   render();
 });
 document.getElementById('resetBdSkipBtn').addEventListener('click', () => {
@@ -1623,19 +1624,21 @@ auth.onAuthStateChanged(async user => {
 });
 
 // ── Login ──────────────────────────────────────────────────────────────────
-const isAndroid = /Android/i.test(navigator.userAgent);
 loginBtn.addEventListener('click', () => {
-  if (isAndroid) {
-    auth.signInWithRedirect(provider).catch(err => console.error('登入失敗', err));
-  } else {
-    auth.signInWithPopup(provider).catch(err => {
-      if (err.code !== 'auth/popup-closed-by-user') console.error('登入失敗', err);
-    });
+  auth.signInWithPopup(provider).catch(err => {
+    if (err.code === 'auth/popup-blocked') {
+      auth.signInWithRedirect(provider).catch(e => console.error('redirect 登入失敗', e));
+    } else if (err.code !== 'auth/popup-closed-by-user') {
+      console.error('登入失敗', err);
+    }
+  });
+});
+auth.getRedirectResult().catch(err => {
+  if (err.code && err.code !== 'auth/no-auth-event') {
+    console.error('redirect 登入失敗', err);
+    auth.signOut();
   }
 });
-if (isAndroid) {
-  auth.getRedirectResult().catch(err => { console.error(err); auth.signOut(); });
-}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 loadData();
