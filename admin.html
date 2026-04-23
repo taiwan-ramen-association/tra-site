@@ -243,8 +243,10 @@ auth.onAuthStateChanged(async user => {
 });
 
 async function loadUsers() {
-  const snap = await db.collection('users').orderBy('memberNo', 'asc').get();
-  allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  const snap = await db.collection('users').get();
+  allUsers = snap.docs
+    .map(d => ({ uid: d.id, ...d.data() }))
+    .sort((a, b) => (a.memberNo ?? Infinity) - (b.memberNo ?? Infinity));
   renderTable(allUsers);
 }
 
