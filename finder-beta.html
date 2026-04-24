@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<script>if(localStorage.getItem('darkMode')==='1')document.documentElement.classList.add('dark-early');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <link rel="icon" href="assets/icons/03.png">
 <link rel="manifest" href="manifest.json">
@@ -46,6 +47,71 @@
     --prep-bg: #edf3ff;
     --prep-txt: #3a5bbf;
   }
+
+  /* ── DARK MODE ── */
+  body.dark {
+    --red: #e04848;
+    --red-dark: #C8272D;
+    --red-light: #2e1515;
+    --ink: #e8e2d8;
+    --paper: #141210;
+    --stone: #9a8d7e;
+    --line: #2e2820;
+    --white: #1e1c18;
+    --open-bg: #0f200f;
+    --open-txt: #5db85d;
+    --pause-bg: #201808;
+    --pause-txt: #d4a030;
+    --prep-bg: #0e1828;
+    --prep-txt: #6080d0;
+  }
+
+  /* 防閃爍：html.dark-early 在 body.dark 套用前先讓背景變暗 */
+  html.dark-early { background: #141210; }
+
+  /* 硬編碼顏色在深色模式的覆寫 */
+  body.dark .card.member  { background: #1e1c10; border-color: #4a3e10; }
+  body.dark .card.member.expanded { border-color: #7a6010; }
+  body.dark .card.birthday { background: #200e14; border-color: #4a1e2e; }
+  body.dark .card.birthday.expanded { border-color: #7a2040; }
+  body.dark .tag-gray { background: #28221c; }
+  body.dark .note-box { background: #1e1a08; border-left-color: #806820; color: #c8a850; }
+  body.dark .link-ig { background: #2a1020; color: #e06090; }
+  body.dark .link-fb { background: #101830; color: #7090d8; }
+  body.dark .member-badge { background: #201a04; color: #c8a030; border-color: #604810; }
+  body.dark .birthday-badge { background: #200e18; color: #e06090; border-color: #501830; }
+  body.dark .locate-btn.located { background: #0e1828; color: #6090d8; border-color: #2040a0; }
+  body.dark .dist-badge { background: #0e1828; color: #6090d8; }
+  body.dark .sm-option:hover:not(.selected) { background: #281010; }
+  body.dark .sm-option.selected { background: #2e1010; }
+  body.dark .sm-slider-wrap { background: #2a1010; }
+  body.dark .sm-reset-btn { border-color: var(--line); }
+  body.dark .sm-cancel:hover { background: #383028; }
+  body.dark .map-popup-content-wrapper,
+  body.dark .leaflet-popup-content-wrapper { background: #1e1c18; color: var(--ink); }
+  body.dark .map-popup-note { background: #1e1a08; border-left-color: #806820; color: #c8a850; }
+  body.dark .map-ctrl-btn { background: #1e1c18; border-color: rgba(255,255,255,0.15); }
+  body.dark .map-ctrl-btn:active { background: #2e2c28; }
+  body.dark .map-ctrl-btn.following { background: #1a50a8; border-color: #1a50a8; }
+
+  /* 地圖 tile 反色成深色風格 */
+  body.dark #map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.88) saturate(0.7); }
+
+  /* 深色模式 toggle 開關樣式 */
+  .dark-toggle {
+    width: 38px; height: 22px; border-radius: 11px;
+    background: var(--line); position: relative;
+    transition: background 0.2s; flex-shrink: 0; margin-left: auto;
+    pointer-events: none;
+  }
+  .dark-toggle::after {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; top: 3px; left: 3px;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  body.dark .dark-toggle { background: var(--red); }
+  body.dark .dark-toggle::after { transform: translateX(16px); }
 
   body {
     font-family: 'Noto Sans TC', sans-serif;
@@ -645,6 +711,7 @@
   <button class="pd-save-btn" id="saveProfileBtn">儲存</button>
 
   <div class="pd-actions">
+    <button class="pd-action" id="darkModeBtn">🌙 深色模式<span class="dark-toggle" id="darkToggle"></span></button>
     <button class="pd-action" id="favFilterBtn" style="display:none">♥ 收藏清單</button>
     <a class="pd-action" href="domination.html">🗾 制霸地圖</a>
     <a class="pd-action" id="adminLink" href="admin.html" style="display:none">⚙️ 會員管理</a>
@@ -1822,6 +1889,18 @@ logoutBtn.addEventListener('click', () => {
   closeProfileDropdown();
   auth.signOut();
 });
+
+// ── 深色模式 ────────────────────────────────────────────────────────────────
+(function () {
+  const saved = localStorage.getItem('darkMode') === '1';
+  if (saved) document.body.classList.add('dark');
+  document.documentElement.classList.remove('dark-early');
+
+  document.getElementById('darkModeBtn').addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark ? '1' : '0');
+  });
+})();
 
 // ── Stamp (踩點) ───────────────────────────────────────────────────────────
 // Encoding: 0=沒去過, 0.2=路過, 1=吃過1次, 2-10=吃過N次, 20=從業過
