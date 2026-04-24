@@ -99,7 +99,7 @@ jobs:
 
           # 自動從地址解析縣市與鄉鎮市區（比對內政部官方清單）
           try:
-              with open('tools/districts.json', 'r', encoding='utf-8') as f:
+              with open('data/districts.json', 'r', encoding='utf-8') as f:
                   _districts = json.load(f)
           except FileNotFoundError:
               _districts = {}
@@ -430,7 +430,7 @@ jobs:
               if towns:
                   result[name] = towns
 
-          with open('tools/districts.json', 'w', encoding='utf-8') as f:
+          with open('data/districts.json', 'w', encoding='utf-8') as f:
               json.dump(result, f, ensure_ascii=False, indent=2)
 
           total = sum(len(v) for v in result.values())
@@ -441,7 +441,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tools/districts.json
+          git add data/districts.json
           git diff --cached --quiet \
             && echo "No changes to districts.json" \
             || git commit -m "更新行政區劃清單 $(date '+%Y-%m')" && git push

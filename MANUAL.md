@@ -28,6 +28,8 @@
 │
 ├── data/
 │   ├── data.json           店家主資料（由 Google Sheets 自動同步）
+│   ├── districts.json      內政部行政區劃資料（自動維護）
+│   ├── id_counters.json    各縣市 ID 歷史最大值（防止 ID 重用）
 │   ├── news.json           最新消息
 │   ├── about.json          關於協會內容
 │   ├── charter.json        協會章程內容
@@ -37,12 +39,9 @@
 │   └── instagram.json      IG 貼文清單
 │
 ├── tools/                  本機 Python 工具（不上版控的除外）
-│   ├── setup_data.py           一鍵：更新行政區 + 補縣市 + 補座標
-│   ├── geocode.py              單獨補齊店家座標（含模式2批次重跑）
-│   ├── excel_to_json.py        xlsx → data/data.json
-│   ├── json_to_excel.py        data/data.json → xlsx（方便用 Excel 編輯）
+│   ├── setup_data.py           資料編輯主工具（A開始編輯 / B完成編輯）
 │   ├── compare_hours.py        比對 Google Places 營業時間（含 API Key，不上版控）
-│   ├── districts.json          內政部行政區劃資料（自動維護）
+│   ├── item_detail.csv         Excel 下拉選單驗證清單
 │   └── data.xlsx               Excel 工作檔（不納入版控，每次重新產生）
 │
 ├── .github/workflows/

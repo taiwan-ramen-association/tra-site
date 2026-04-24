@@ -46,7 +46,7 @@ tools_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir  = os.path.dirname(tools_dir)
 json_path = os.path.join(root_dir, 'data', 'data.json')
 xlsx_path = os.path.join(tools_dir, 'data.xlsx')
-dist_path = os.path.join(tools_dir, 'districts.json')
+dist_path = os.path.join(root_dir, 'data', 'districts.json')
 
 # ── 共用 I/O ──────────────────────────────────────────────────────────────────
 def load_data():
