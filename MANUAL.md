@@ -15,7 +15,10 @@
 ├── meetings.html           會議紀錄
 ├── membership.html         加入會員
 ├── partners.html           合作夥伴
-├── finder.html             拉麵搜尋器
+├── finder.html             拉麵搜尋器（正式版）
+├── finder-beta.html        拉麵搜尋器（測試版，功能驗證後同步至 finder.html）
+├── domination.html         制霸地圖（各鄉鎮踩點比例視覺化）
+├── admin.html              後台管理（需管理員權限）
 ├── cards.html              店家名片
 ├── members-zone.html       會務專區
 ├── other.html              其他
@@ -131,40 +134,24 @@ git push
 直接在 Google Sheets「總表csv」工作表編輯，系統每 12 小時自動同步至網站。
 
 **方式二：本機 Excel**
-```bash
-# 1. 產生可編輯的 Excel
-python tools/json_to_excel.py
-
-# 2. 用 Excel 開啟 tools/data.xlsx 編輯後存檔
-
-# 3. 轉回 JSON（會自動正規化營業時段格式）
-python tools/excel_to_json.py
-
-# 4. Push
-git add data/data.json
-git commit -m "更新店家資料"
-git push
-```
-
-> `json_to_excel.py` 和 `excel_to_json.py` 都會自動正規化營業時段格式：
-> 統一破折號為全形（`–`）、多時段中間以頓號分隔（`12:00–14:00、17:00–21:00`）
-
----
-
-### 補齊店家資料（一鍵）
-
-新增店家後，若縣市／鄉鎮市區或座標欄位為空，執行：
 
 ```bash
 python tools/setup_data.py
 ```
 
-依序執行：
-1. 從內政部 API 更新行政區劃清單
-2. 自動從地址填入縣市／鄉鎮市區（僅補空白欄位）
-3. 自動補齊 lat/lng 座標
+啟動後選擇：
 
-> 所有步驟均使用免費 API，無需 API Key。
+- **A【開始編輯】** — 將 data.json 轉成 Excel 並自動開啟，在 Excel 中新增／修改後存檔
+- **B【完成編輯】** — 讀取 Excel → 自動補 ID / 縣市 / 正規化格式 → 寫回 JSON 與 Excel
+- **0【進階單步】** — 單獨執行任一步驟（更新行政區、補座標等）
+
+編輯完成後：
+
+```bash
+git add data/data.json data/id_counters.json
+git commit -m "更新店家資料"
+git push
+```
 
 ---
 
@@ -223,7 +210,7 @@ pip install openpyxl requests gspread google-auth
 ```
 
 ### 注意事項
-- `tools/data.xlsx` 不納入版控，每次需在本機重新產生（執行 `json_to_excel.py`）
+- `tools/data.xlsx` 不納入版控，每次需在本機重新產生（執行 setup_data.py 選 A）
 - `tools/compare_hours.py` 含 API Key，不納入版控，換電腦時需自行保管
 - GitHub Actions 的自動同步不需要本機設定，在 GitHub 雲端執行
 - Google Service Account 金鑰只需設定在 GitHub Secrets，本機工具不需要
