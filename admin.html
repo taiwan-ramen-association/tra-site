@@ -219,8 +219,8 @@
     </div>
     <div class="settings-field">
       <label>GPS 距離限制（公尺）</label>
-      <input type="number" id="settingGpsRadius" min="100" max="2000" step="50" value="500">
-      <div class="settings-hint">例：500 = 距離店家 500 公尺內才能回報；設太大失去意義，建議 300–800</div>
+      <input type="number" id="settingGpsRadius" min="100" step="50" value="500">
+      <div class="settings-hint">例：500 = 距離店家 500 公尺內才能回報</div>
     </div>
   </div>
   <div class="settings-footer">
@@ -477,7 +477,7 @@ document.getElementById('settingsSaveBtn').addEventListener('click', async () =>
   const status = document.getElementById('settingsStatus');
 
   if (isNaN(hours) || hours < 1 || hours > 12) { status.textContent = '⚠️ 小時數需在 1–12 之間'; return; }
-  if (isNaN(radius) || radius < 100 || radius > 2000) { status.textContent = '⚠️ 距離需在 100–2000 公尺之間'; return; }
+  if (isNaN(radius) || radius < 100) { status.textContent = '⚠️ 距離最少 100 公尺'; return; }
 
   const btn = document.getElementById('settingsSaveBtn');
   btn.disabled = true; btn.textContent = '儲存中…';
