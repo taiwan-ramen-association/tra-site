@@ -308,6 +308,181 @@
     font-size: 12px; color: #6b5500; line-height: 1.5; margin-bottom: 10px;
   }
 
+  /* QUEUE SECTION */
+  .queue-section {
+    background: #fff8f0; border-left: 3px solid #f0943a;
+    border-radius: 0 8px 8px 0; padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .queue-sec-label {
+    font-size: 10px; letter-spacing: 0.5px; color: #a05a00;
+    text-transform: uppercase; margin-bottom: 6px; display: block;
+  }
+  .queue-count-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+  .queue-count-num { font-size: 28px; font-weight: 800; color: #f0943a; line-height: 1; }
+  .queue-count-unit { font-size: 13px; color: #a05a00; }
+  .queue-no-data { font-size: 13px; color: var(--stone); font-style: italic; }
+  .queue-report-btn {
+    width: 100%; padding: 8px;
+    background: #f0943a; color: white; border: none;
+    border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; transition: opacity 0.15s;
+  }
+  .queue-report-btn:hover:not(:disabled) { opacity: 0.85; }
+  .queue-report-btn:disabled { background: #ddd; color: #999; cursor: default; font-size: 12px; }
+  .queue-badge-header {
+    display: inline-flex; align-items: center;
+    background: #fff0e0; color: #c06000;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+    border: 1px solid #f0c080; flex-shrink: 0; margin-top: 2px;
+  }
+  /* Queue Modal */
+  .queue-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 600; display: none;
+  }
+  .queue-modal {
+    position: fixed; z-index: 601;
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(380px, calc(100vw - 20px));
+    background: var(--white); border-radius: 18px;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.35);
+    padding: 22px 20px; display: none;
+  }
+  .qm-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px; font-weight: 700; margin-bottom: 14px; line-height: 1.4;
+  }
+  .qm-opt {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px; border: 1.5px solid var(--line);
+    border-radius: 11px; cursor: pointer; margin-bottom: 7px;
+    transition: all 0.15s; background: var(--paper); user-select: none;
+  }
+  .qm-opt:hover:not(.selected) { border-color: #f0943a; background: #fff8f0; }
+  .qm-opt.selected { border-color: #f0943a; background: #fff0e0; }
+  .qm-opt-label { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .qm-opt-radio {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--line); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .qm-opt.selected .qm-opt-radio { border-color: #f0943a; background: #f0943a; }
+  .qm-opt.selected .qm-opt-radio::after { content: ''; width: 8px; height: 8px; background: #fff; border-radius: 50%; }
+  .qm-footer { display: flex; gap: 10px; margin-top: 16px; }
+  .qm-btn {
+    flex: 1; padding: 12px; border-radius: 11px; border: none;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; transition: opacity 0.15s;
+  }
+  .qm-btn:disabled { opacity: 0.5; cursor: default; }
+  .qm-cancel { background: var(--paper); color: var(--stone); border: 1.5px solid var(--line); }
+  .qm-confirm { background: #f0943a; color: white; }
+  body.dark .queue-section { background: #2a1e0e; border-color: #c07020; }
+  body.dark .queue-sec-label { color: #c07020; }
+  body.dark .queue-count-unit { color: #c07020; }
+  body.dark .queue-badge-header { background: #2a1e0e; color: #f0943a; border-color: #8a5010; }
+  body.dark .qm-opt { background: #2a2017; }
+  body.dark .qm-opt.selected { background: #3a2810; }
+
+  /* RANKINGS MODAL */
+  .rk-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; display: none;
+  }
+  .rk-modal {
+    position: fixed; z-index: 601;
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(480px, calc(100vw - 16px));
+    max-height: 88vh; overflow-y: auto;
+    background: var(--white); border-radius: 18px;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.35);
+    display: none;
+  }
+  .rk-header {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--white); border-bottom: 1px solid var(--line);
+    padding: 16px 18px 0; border-radius: 18px 18px 0 0;
+  }
+  .rk-header-top {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .rk-title { font-family: 'Noto Serif TC', serif; font-size: 18px; font-weight: 700; }
+  .rk-close {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--paper);
+    font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--stone);
+  }
+  .rk-tabs { display: flex; gap: 0; }
+  .rk-tab {
+    flex: 1; padding: 8px; border: none; background: none; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: var(--stone);
+    border-bottom: 2px solid transparent; transition: all 0.15s;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .rk-tab.active { color: var(--red); border-bottom-color: var(--red); }
+  .rk-body { padding: 16px 18px 20px; }
+
+  /* 用戶自己的狀態卡 */
+  .rk-me-card {
+    background: var(--paper); border-radius: 12px;
+    padding: 13px 15px; margin-bottom: 16px;
+  }
+  .rk-me-label { font-size: 10px; letter-spacing: 0.5px; color: var(--stone); margin-bottom: 6px; }
+  .rk-me-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .rk-me-stat { text-align: center; }
+  .rk-me-num { font-size: 22px; font-weight: 800; color: var(--red); line-height: 1; }
+  .rk-me-sub { font-size: 10px; color: var(--stone); margin-top: 2px; }
+  .rk-placement-bar {
+    margin-top: 10px; background: var(--line); border-radius: 4px; height: 6px; overflow: hidden;
+  }
+  .rk-placement-fill {
+    height: 100%; background: var(--red); border-radius: 4px; transition: width 0.4s;
+  }
+  .rk-placement-hint { font-size: 11px; color: var(--stone); margin-top: 4px; }
+
+  /* 排行榜列表 */
+  .rk-section-label {
+    font-size: 10px; letter-spacing: 0.5px; color: var(--stone);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .rk-podium { display: flex; gap: 8px; margin-bottom: 12px; }
+  .rk-podium-item {
+    flex: 1; background: var(--paper); border-radius: 12px;
+    padding: 12px 8px; text-align: center; border: 1.5px solid var(--line);
+  }
+  .rk-podium-item.gold   { border-color: #e8d000; background: #fffde8; }
+  .rk-podium-item.silver { border-color: #b0b8c0; background: #f4f6f8; }
+  .rk-podium-item.bronze { border-color: #d4956a; background: #fff4ec; }
+  .rk-podium-medal { font-size: 24px; line-height: 1; margin-bottom: 4px; }
+  .rk-podium-name { font-size: 12px; font-weight: 600; color: var(--ink); word-break: break-all; }
+  .rk-podium-count { font-size: 11px; color: var(--stone); margin-top: 2px; }
+  .rk-list-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 5px;
+    background: var(--paper);
+  }
+  .rk-list-item.is-me { background: #fff0f0; border: 1px solid #f4b8cc; }
+  .rk-list-rank { font-size: 13px; font-weight: 700; color: var(--stone); width: 24px; flex-shrink: 0; }
+  .rk-list-name { font-size: 14px; font-weight: 500; color: var(--ink); flex: 1; }
+  .rk-list-count { font-size: 13px; color: var(--stone); flex-shrink: 0; }
+  .rk-empty { text-align: center; color: var(--stone); font-size: 14px; padding: 24px 0; }
+  .rk-winners-section { margin-top: 14px; }
+  .rk-winner-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fff8e0; border: 1px solid #f0d060; border-radius: 20px;
+    padding: 5px 12px; font-size: 13px; font-weight: 500; margin: 4px 4px 0 0;
+  }
+  body.dark .rk-modal,
+  body.dark .rk-header { background: #1e1c18; }
+  body.dark .rk-me-card,
+  body.dark .rk-podium-item,
+  body.dark .rk-list-item { background: #2a2620; }
+  body.dark .rk-podium-item.gold   { background: #2a2500; }
+  body.dark .rk-podium-item.silver { background: #252830; }
+  body.dark .rk-podium-item.bronze { background: #2a1e14; }
+  body.dark .rk-list-item.is-me    { background: #2a1018; }
+  body.dark .rk-winner-chip { background: #2a2000; border-color: #8a7000; }
+
   /* MAP BUTTON */
   .map-btn {
     display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -731,8 +906,27 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" style="display:none"></div>
 <div class="drawer" id="drawer" style="display:none">
+  <button class="drawer-item" id="rankingsBtn">🏆 回報排行榜</button>
   <button class="drawer-item" id="resetBdSkipBtn">🎂 重設壽星通知</button>
   <a class="drawer-item" href="index.html">🏠 回首頁</a>
+</div>
+
+<!-- Rankings Modal -->
+<div class="rk-backdrop" id="rkBackdrop"></div>
+<div class="rk-modal" id="rkModal">
+  <div class="rk-header">
+    <div class="rk-header-top">
+      <div class="rk-title">🏆 回報排行榜</div>
+      <button class="rk-close" id="rkCloseBtn">✕</button>
+    </div>
+    <div class="rk-tabs">
+      <button class="rk-tab active" data-tab="current">本月</button>
+      <button class="rk-tab" data-tab="last">上月結果</button>
+    </div>
+  </div>
+  <div class="rk-body" id="rkBody">
+    <div class="rk-empty">載入中...</div>
+  </div>
 </div>
 
 <!-- Stamp Modal -->
@@ -787,6 +981,36 @@
   </div>
 </div>
 <div id="stampToast"></div>
+
+<!-- Queue Report Modal -->
+<div class="queue-backdrop" id="queueBackdrop"></div>
+<div id="queueModal" class="queue-modal">
+  <div class="qm-title" id="qmTitle"></div>
+  <div class="qm-opt" data-value="0">
+    <span class="qm-opt-label">🟢 不用排 / 已清空</span>
+    <div class="qm-opt-radio"></div>
+  </div>
+  <div class="qm-opt" data-value="3">
+    <span class="qm-opt-label">🟡 約 1–5 人</span>
+    <div class="qm-opt-radio"></div>
+  </div>
+  <div class="qm-opt" data-value="8">
+    <span class="qm-opt-label">🟠 約 6–10 人</span>
+    <div class="qm-opt-radio"></div>
+  </div>
+  <div class="qm-opt" data-value="15">
+    <span class="qm-opt-label">🔴 約 11–20 人</span>
+    <div class="qm-opt-radio"></div>
+  </div>
+  <div class="qm-opt" data-value="25">
+    <span class="qm-opt-label">🔴🔴 20 人以上</span>
+    <div class="qm-opt-radio"></div>
+  </div>
+  <div class="qm-footer">
+    <button class="qm-btn qm-cancel" id="qmCancelBtn">取消</button>
+    <button class="qm-btn qm-confirm" id="qmConfirmBtn" disabled>確認送出</button>
+  </div>
+</div>
 
 <!-- Clear All Data Overlay -->
 <div class="clear-overlay" id="clearOverlay">
@@ -925,6 +1149,8 @@ async function loadData() {
   document.getElementById('loadingScreen').style.display = 'flex';
   document.getElementById('errorScreen').style.display   = 'none';
   document.getElementById('mainContent').style.display   = 'none';
+
+  loadQueueSettings(); // 非同步背景載入，不阻塞主流程
 
   try {
     const res  = await fetch(DATA_URL + '?t=' + Date.now()); // 避免快取
@@ -1413,15 +1639,16 @@ function renderCard(shop) {
   const birthday = isBirthday(shop);
   const member   = shop['會員'] === 'Y';
   return `
-  <div class="card${member ? ' member' : ''}${birthday ? ' birthday' : ''}">
+  <div class="card${member ? ' member' : ''}${birthday ? ' birthday' : ''}" data-shop-id="${escapeAttr(shop['ID'] || '')}">
     <div class="card-header">
       <div class="card-name">${shop['店名']}</div>
-      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
         ${dist !== null ? `<span class="dist-badge">${formatDist(dist)}</span>` : ''}
         ${birthday ? '<span class="birthday-badge">🎂 本日壽星</span>' : ''}
         ${shop['會員'] === 'Y' ? '<span class="member-badge">MEMBER SHOP</span>' : ''}
         ${isNewOpen(shop) ? '<span class="new-open-badge">NEW OPEN</span>' : ''}
         ${statusBadge(shop['營業狀態'])}
+        <span class="queue-badge-header" data-id="${escapeAttr(shop['ID'] || '')}" hidden></span>
         <button class="fav-btn${!auth.currentUser || isWarned ? ' locked' : ''}" data-id="${escapeAttr(shop['ID'] || '')}">${favSet.has(shop['ID']) ? '♥' : '♡'}</button>
         <button class="stamp-btn${!auth.currentUser || isWarned ? ' locked' : ' can-stamp'}${stampMap[shop['ID']] != null ? ' stamped' : ''}" data-id="${escapeAttr(shop['ID'] || '')}" data-name="${escapeAttr(shop['店名'] || '')}" title="踩點">👣</button>
       </div>
@@ -1435,6 +1662,11 @@ function renderCard(shop) {
       ${factions.map(t=>`<span class="tag tag-gray">${t}</span>`).join('')}
     </div>` : ''}
     <div class="card-detail">
+      <div class="queue-section" data-shop-id="${escapeAttr(shop['ID'] || '')}">
+        <span class="queue-sec-label">🕐 目前排隊狀況</span>
+        <div class="queue-count-row"><span class="queue-no-data">展開後載入...</span></div>
+        <button class="queue-report-btn" data-id="${escapeAttr(shop['ID'] || '')}" data-name="${escapeAttr(shop['店名'] || '')}">我要回報人數</button>
+      </div>
       ${mapBtn}
       ${detailItems.length ? `<div class="detail-grid">${detailItems.map(d=>`<div><div class="detail-label">${d.l}</div><div class="detail-value">${d.v}</div></div>`).join('')}</div>` : ''}
       ${shop['營業備註'] ? `<div class="note-box">${shop['營業備註'].replace(/\n/g,'<br>')}</div>` : ''}
@@ -1463,11 +1695,15 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
-      if (expandedCard) setTimeout(() => card.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
+      if (expandedCard) {
+        setTimeout(() => card.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
+        const shopId = card.dataset.shopId;
+        if (shopId) refreshQueueSection(shopId);
+      }
     });
   });
   list.querySelectorAll('.fav-btn').forEach(btn => {
@@ -1484,6 +1720,12 @@ function render() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       openStampModal(btn.dataset.id, btn.dataset.name);
+    });
+  });
+  list.querySelectorAll('.queue-report-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openQueueModal(btn.dataset.id, btn.dataset.name);
     });
   });
 }
@@ -1526,6 +1768,17 @@ document.getElementById('favFilterBtn').addEventListener('click', () => {
   closeProfileDropdown();
   render();
 });
+document.getElementById('rankingsBtn').addEventListener('click', openRankingsModal);
+document.getElementById('rkBackdrop').addEventListener('click', closeRankingsModal);
+document.getElementById('rkCloseBtn').addEventListener('click', closeRankingsModal);
+document.querySelectorAll('.rk-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    _rkTab = tab.dataset.tab;
+    document.querySelectorAll('.rk-tab').forEach(t => t.classList.toggle('active', t === tab));
+    loadRankings(_rkTab);
+  });
+});
+
 document.getElementById('resetBdSkipBtn').addEventListener('click', () => {
   localStorage.removeItem(BD_SKIP_KEY);
   document.getElementById('drawer').style.display   = 'none';
@@ -1942,6 +2195,10 @@ logoutBtn.addEventListener('click', () => {
 // Encoding: 0=沒去過, 0.2=路過, 1=吃過1次, 2-10=吃過N次, 20=從業過
 let stampMap  = {};  // shopId → numeric score value
 let reviewMap = {};  // shopId → string
+const queueCache = {};  // shopId → { entries, updatedAt }
+let _queueShopId   = null;
+let _queueSelected = null;
+let _queueGps      = null; // { lat, lng, confirmed }
 let isWarned  = false;
 let _stampShopId   = null;
 let _stampShopName = '';
@@ -1971,6 +2228,237 @@ function showStampToast(msg) {
   t.classList.add('show');
   clearTimeout(t._t);
   t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Queue helpers ──────────────────────────────────────────────────────────
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function getShopById(shopId) {
+  return ALL_DATA.find(s => s['ID'] === shopId) || null;
+}
+
+function getShopTodayOpenTimes(shop) {
+  const dayNames = ['日','一','二','三','四','五','六'];
+  const today = dayNames[new Date().getDay()];
+  const hours = shop['週' + today] || '';
+  if (!hours) return [];
+  const matches = [...hours.matchAll(/(\d{1,2})[:：](\d{2})/g)];
+  const times = [];
+  for (let i = 0; i < matches.length; i += 2) {
+    times.push(parseInt(matches[i][1]) * 60 + parseInt(matches[i][2]));
+  }
+  return times;
+}
+
+function isWithinPreOpenWindow(shop) {
+  const now   = new Date().getHours() * 60 + new Date().getMinutes();
+  const times = getShopTodayOpenTimes(shop);
+  if (!times.length) return true; // 無排班資料 → 不擋
+  const limitMins = (queueSettings.preOpenHours || 4) * 60;
+  return times.some(t => now >= t || (t - now) <= limitMins);
+}
+
+function countToTier(count) {
+  if (count === 0)  return 'zero';
+  if (count <= 5)   return 'low';
+  if (count <= 15)  return 'mid';
+  return 'high';
+}
+
+async function penalizeTrustScore(delta) {
+  if (!auth.currentUser || !delta) return;
+  try {
+    await db.collection('users').doc(auth.currentUser.uid).update({
+      trustScore: firebase.firestore.FieldValue.increment(delta)
+    });
+  } catch(e) {}
+}
+
+// ── Queue ──────────────────────────────────────────────────────────────────
+const QUEUE_RATE_MS = 30 * 60 * 1000; // 30 min
+const QUEUE_HOURS   = [[600, 870], [1020, 1290]]; // 10:00-14:30, 17:00-21:30
+
+let queueSettings = { preOpenHours: 4, gpsRadiusMeters: 500 }; // 預設值，會被 Firestore 覆蓋
+
+async function loadQueueSettings() {
+  try {
+    const snap = await db.collection('meta').doc('queueSettings').get();
+    if (snap.exists) queueSettings = { ...queueSettings, ...snap.data() };
+  } catch(e) {} // 讀不到就用預設值
+}
+
+function isQueueHours() {
+  const t = new Date().getHours() * 60 + new Date().getMinutes();
+  return QUEUE_HOURS.some(([a, b]) => t >= a && t <= b);
+}
+
+function queueMedian(entries) {
+  const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+  const valid = (entries || []).filter(e => e.ts > cutoff).map(e => e.count);
+  if (!valid.length) return null;
+  valid.sort((a, b) => a - b);
+  const mid = Math.floor(valid.length / 2);
+  return valid.length % 2 ? valid[mid] : Math.round((valid[mid - 1] + valid[mid]) / 2);
+}
+
+async function loadQueueData(shopId) {
+  if (queueCache[shopId] !== undefined) return queueCache[shopId];
+  try {
+    const snap = await db.collection('queues').doc(shopId).get();
+    queueCache[shopId] = snap.exists ? snap.data() : { entries: [] };
+  } catch(e) {
+    queueCache[shopId] = { entries: [] };
+  }
+  return queueCache[shopId];
+}
+
+async function refreshQueueSection(shopId) {
+  const data   = await loadQueueData(shopId);
+  const median = queueMedian(data.entries);
+  const sec    = document.querySelector(`.queue-section[data-shop-id="${shopId}"]`);
+  if (!sec) return;
+  const row = sec.querySelector('.queue-count-row');
+  const btn = sec.querySelector('.queue-report-btn');
+
+  // 顯示排隊人數（不限時段，有效回報就顯示）
+  if (median === null) {
+    row.innerHTML = '<span class="queue-no-data">暫無回報，你第一個！</span>';
+  } else {
+    row.innerHTML = `<span class="queue-count-num">${median}</span><span class="queue-count-unit"> 人</span>`;
+    const badge = document.querySelector(`.queue-badge-header[data-id="${shopId}"]`);
+    if (badge) { badge.textContent = '~' + median + '人'; badge.hidden = false; }
+  }
+
+  if (!btn) return;
+  if (!auth.currentUser) {
+    btn.disabled = true; btn.textContent = '登入後可回報'; return;
+  }
+
+  // 檢查 rate limit
+  const last = parseInt(localStorage.getItem('qr_' + shopId) || '0');
+  const remaining = QUEUE_RATE_MS - (Date.now() - last);
+  if (remaining > 0) {
+    btn.disabled = true;
+    btn.textContent = `${Math.ceil(remaining / 60000)} 分鐘後可再次回報`;
+  } else {
+    btn.disabled = false; btn.textContent = '我要回報人數';
+  }
+}
+
+async function openQueueModal(shopId, shopName) {
+  if (!auth.currentUser) { showStampToast('請先登入才能回報'); return; }
+
+  const shop = getShopById(shopId);
+
+  // 開店時間檢查
+  if (shop && !isWithinPreOpenWindow(shop)) {
+    penalizeTrustScore(-2);
+    showStampToast('距離開店超過 4 小時，此時回報無效');
+    return;
+  }
+
+  // GPS 檢查
+  if (!navigator.geolocation) {
+    showStampToast('您的瀏覽器不支援定位功能');
+    return;
+  }
+  showStampToast('📍 取得定位中...');
+  const gpsResult = await new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ ok: true, lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      ()  => resolve({ ok: false }),
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  });
+
+  if (!gpsResult.ok) {
+    penalizeTrustScore(-1);
+    showStampToast('需要開啟定位才能回報排隊狀況');
+    return;
+  }
+
+  if (shop && shop['lat'] && shop['lng']) {
+    const dist   = haversineDistance(gpsResult.lat, gpsResult.lng, shop['lat'], shop['lng']);
+    const radius = queueSettings.gpsRadiusMeters || 500;
+    if (dist > radius) {
+      showStampToast(`距離此店家 ${Math.round(dist)} 公尺，需在 ${radius} 公尺內才能回報`);
+      return;
+    }
+    _queueGps = { lat: gpsResult.lat, lng: gpsResult.lng, confirmed: true };
+  } else {
+    _queueGps = { lat: gpsResult.lat, lng: gpsResult.lng, confirmed: false };
+  }
+
+  _queueShopId = shopId; _queueSelected = null;
+  document.getElementById('qmTitle').textContent = '回報排隊人數　' + shopName;
+  document.querySelectorAll('.qm-opt').forEach(el => el.classList.remove('selected'));
+  document.getElementById('qmConfirmBtn').disabled = true;
+  document.getElementById('queueBackdrop').style.display = 'block';
+  document.getElementById('queueModal').style.display    = 'block';
+}
+
+function closeQueueModal() {
+  document.getElementById('queueBackdrop').style.display = 'none';
+  document.getElementById('queueModal').style.display    = 'none';
+}
+
+async function submitQueueReport() {
+  if (!_queueShopId || _queueSelected === null) return;
+  const confirmBtn = document.getElementById('qmConfirmBtn');
+  confirmBtn.disabled = true; confirmBtn.textContent = '送出中...';
+  try {
+    const now  = Date.now();
+    const uid  = auth.currentUser.uid;
+    const entry = { uid, count: _queueSelected, ts: now };
+
+    // 1. 更新即時排隊數據
+    const queueRef = db.collection('queues').doc(_queueShopId);
+    await db.runTransaction(async tx => {
+      const snap   = await tx.get(queueRef);
+      const cutoff = now - 2 * 60 * 60 * 1000;
+      let entries  = snap.exists ? (snap.data().entries || []) : [];
+      entries = entries.filter(e => e.ts > cutoff && e.uid !== uid);
+      entries.push(entry);
+      if (entries.length > 10) entries = entries.slice(-10);
+      tx.set(queueRef, { entries, updatedAt: now });
+    });
+
+    // 2. 寫入 reportLogs（排名計算用）
+    const logData = {
+      uid,
+      shopId:      _queueShopId,
+      count:       _queueSelected,
+      tier:        countToTier(_queueSelected),
+      ts:          now,
+      mealHour:    isQueueHours(),
+      gpsConfirmed: _queueGps?.confirmed || false,
+    };
+    if (_queueGps?.lat) { logData.lat = _queueGps.lat; logData.lng = _queueGps.lng; }
+    await db.collection('reportLogs').add(logData);
+
+    // 3. 更新用戶計數器與信任分
+    const trustDelta = (logData.mealHour ? 1 : 0) + (logData.gpsConfirmed ? 1 : 0);
+    await db.collection('users').doc(uid).update({
+      reportCount:      firebase.firestore.FieldValue.increment(1),
+      reportMonthCount: firebase.firestore.FieldValue.increment(1),
+      trustScore:       firebase.firestore.FieldValue.increment(trustDelta),
+    });
+
+    localStorage.setItem('qr_' + _queueShopId, now.toString());
+    delete queueCache[_queueShopId];
+    closeQueueModal();
+    showStampToast('✅ 回報成功，感謝你的貢獻！');
+    refreshQueueSection(_queueShopId);
+  } catch(e) {
+    confirmBtn.disabled = false; confirmBtn.textContent = '確認送出';
+    showStampToast('❌ 送出失敗，請稍後再試');
+  }
 }
 
 async function loadStamps(uid) {
@@ -2027,6 +2515,18 @@ function updateSliderLabel(n) {
 
 document.getElementById('stampBackdrop').addEventListener('click', closeStampModal);
 document.getElementById('smCancelBtn').addEventListener('click', closeStampModal);
+
+document.getElementById('queueBackdrop').addEventListener('click', closeQueueModal);
+document.getElementById('qmCancelBtn').addEventListener('click', closeQueueModal);
+document.getElementById('qmConfirmBtn').addEventListener('click', submitQueueReport);
+document.querySelectorAll('.qm-opt').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.qm-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    _queueSelected = parseInt(el.dataset.value, 10);
+    document.getElementById('qmConfirmBtn').disabled = false;
+  });
+});
 
 document.querySelectorAll('.sm-option').forEach(el => {
   el.addEventListener('click', () => {
@@ -2087,6 +2587,160 @@ document.getElementById('smResetBtn').addEventListener('click', async () => {
     showStampToast('已清除踩點記錄');
   } catch (e) { showStampToast('重置失敗：' + e.message); }
 });
+
+// ── Rankings Modal ─────────────────────────────────────────────────────────
+let _rkTab = 'current';
+
+function openRankingsModal() {
+  document.getElementById('drawer').style.display = 'none';
+  document.getElementById('drawerBackdrop').style.display = 'none';
+  _rkTab = 'current';
+  document.querySelectorAll('.rk-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'current'));
+  document.getElementById('rkBackdrop').style.display = 'block';
+  document.getElementById('rkModal').style.display    = 'block';
+  loadRankings('current');
+}
+
+function closeRankingsModal() {
+  document.getElementById('rkBackdrop').style.display = 'none';
+  document.getElementById('rkModal').style.display    = 'none';
+}
+
+function currentMonthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function lastMonthKey() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+async function loadRankings(tab) {
+  const body = document.getElementById('rkBody');
+  body.innerHTML = '<div class="rk-empty">載入中...</div>';
+  const key  = tab === 'current' ? currentMonthKey() : lastMonthKey();
+  let rankDoc = null;
+  try {
+    const snap = await db.collection('rankings').doc(key).get();
+    rankDoc = snap.exists ? snap.data() : null;
+  } catch(e) {}
+
+  const uid  = auth.currentUser?.uid;
+  let userDoc = null;
+  if (uid) {
+    try {
+      const snap = await db.collection('users').doc(uid).get();
+      userDoc = snap.exists ? snap.data() : null;
+    } catch(e) {}
+  }
+
+  body.innerHTML = renderRankings(tab, rankDoc, userDoc, uid);
+}
+
+function renderRankings(tab, rankDoc, userDoc, uid) {
+  const parts = [];
+
+  // ── 用戶狀態卡 ──
+  if (userDoc) {
+    const total    = userDoc.reportCount      || 0;
+    const placed   = total >= 20;
+    const pct      = Math.min(100, Math.round(total / 20 * 100));
+    parts.push(`<div class="rk-me-card">
+      <div class="rk-me-label">你的回報狀況</div>
+      <div class="rk-me-row">
+        <div class="rk-me-stat">
+          <div class="rk-me-num">${total}</div>
+          <div class="rk-me-sub">累計回報</div>
+        </div>
+        <div style="flex:1;padding:0 12px">
+          ${placed
+            ? `<div style="font-size:13px;color:var(--red);font-weight:600">✅ 已出水，可參與排名</div>`
+            : `<div class="rk-placement-bar"><div class="rk-placement-fill" style="width:${pct}%"></div></div>
+               <div class="rk-placement-hint">累計 ${total} / 20 次可出水參與排名</div>`}
+        </div>
+      </div>
+    </div>`);
+  }
+
+  // ── 排行榜內容 ──
+  if (!rankDoc) {
+    const label = tab === 'current' ? '本月排行榜尚未公布，月底前會自動計算。' : '上月尚無排行資料。';
+    parts.push(`<div class="rk-empty">${label}</div>`);
+    return parts.join('');
+  }
+
+  const top3     = rankDoc.top3     || [];
+  const drawPool = rankDoc.drawPool || [];
+  const medals   = ['gold','silver','bronze'];
+  const medalEmoji = ['🥇','🥈','🥉'];
+
+  if (tab === 'current') {
+    // 前三名講台
+    if (top3.length) {
+      parts.push('<div class="rk-section-label">保證得獎（前 3 名）</div>');
+      parts.push('<div class="rk-podium">');
+      top3.forEach((u, i) => {
+        parts.push(`<div class="rk-podium-item ${medals[i] || ''}">
+          <div class="rk-podium-medal">${medalEmoji[i] || (i+1)}</div>
+          <div class="rk-podium-name">${escapeHtml(u.displayName)}</div>
+          <div class="rk-podium-count">${u.monthCount} 次</div>
+        </div>`);
+      });
+      parts.push('</div>');
+    }
+    // 抽獎池 4–50
+    if (drawPool.length) {
+      parts.push('<div class="rk-section-label" style="margin-top:12px">抽獎池（第 4–50 名）</div>');
+      drawPool.forEach((u, i) => {
+        const isMe = u.uid === uid;
+        parts.push(`<div class="rk-list-item${isMe ? ' is-me' : ''}">
+          <div class="rk-list-rank">${i + 4}</div>
+          <div class="rk-list-name">${escapeHtml(u.displayName)}${isMe ? ' 👈' : ''}</div>
+          <div class="rk-list-count">${u.monthCount} 次</div>
+        </div>`);
+      });
+    }
+    if (!top3.length && !drawPool.length) {
+      parts.push('<div class="rk-empty">本月尚無符合資格的回報者</div>');
+    }
+    const calc = rankDoc.calculatedAt ? new Date(rankDoc.calculatedAt).toLocaleDateString('zh-TW') : '';
+    if (calc) parts.push(`<div style="font-size:11px;color:var(--stone);text-align:center;margin-top:14px">統計時間：${calc}</div>`);
+
+  } else {
+    // 上月結果
+    if (top3.length) {
+      parts.push('<div class="rk-section-label">保證得獎</div>');
+      parts.push('<div class="rk-podium">');
+      top3.forEach((u, i) => {
+        parts.push(`<div class="rk-podium-item ${medals[i] || ''}">
+          <div class="rk-podium-medal">${medalEmoji[i] || (i+1)}</div>
+          <div class="rk-podium-name">${escapeHtml(u.displayName)}</div>
+          <div class="rk-podium-count">${u.monthCount} 次</div>
+        </div>`);
+      });
+      parts.push('</div>');
+    }
+    const drawn = rankDoc.drawnWinners || [];
+    parts.push('<div class="rk-winners-section">');
+    parts.push('<div class="rk-section-label">隨機抽獎得獎者</div>');
+    if (drawn.length) {
+      drawn.forEach(w => {
+        parts.push(`<span class="rk-winner-chip">🎉 ${escapeHtml(w.displayName)}</span>`);
+      });
+    } else {
+      parts.push('<div style="font-size:13px;color:var(--stone)">抽獎尚未進行</div>');
+    }
+    parts.push('</div>');
+  }
+
+  return parts.join('');
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 // ── Clear All Data ─────────────────────────────────────────────────────────
 let _clearTimer = null;

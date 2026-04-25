@@ -125,6 +125,31 @@
   .toast.show { opacity: 1; }
 
   #loading { text-align: center; padding: 60px; color: var(--stone); font-size: 14px; }
+
+  .settings-card {
+    background: var(--white); border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    padding: 20px 24px; margin-top: 28px;
+  }
+  .settings-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 480px) { .settings-grid { grid-template-columns: 1fr; } }
+  .settings-field label { display: block; font-size: 11px; color: var(--stone); margin-bottom: 4px; letter-spacing: 0.4px; }
+  .settings-field input {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--line);
+    border-radius: 7px; font-size: 14px; background: var(--paper);
+    font-family: inherit;
+  }
+  .settings-field input:focus { outline: 2px solid var(--red); border-color: transparent; }
+  .settings-hint { font-size: 11px; color: var(--stone); margin-top: 3px; }
+  .settings-footer { margin-top: 16px; display: flex; align-items: center; gap: 12px; }
+  .settings-save {
+    padding: 8px 20px; background: var(--red); color: var(--white);
+    border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+  }
+  .settings-save:hover { opacity: 0.85; }
+  .settings-status { font-size: 12px; color: var(--stone); }
 </style>
 </head>
 <body>
@@ -181,6 +206,26 @@
     </thead>
     <tbody id="userTbody"></tbody>
   </table>
+  </div>
+</div>
+
+<div class="settings-card" id="settingsCard" style="display:none">
+  <h3>⚙️ 排隊回報設定</h3>
+  <div class="settings-grid">
+    <div class="settings-field">
+      <label>開店前幾小時內可回報</label>
+      <input type="number" id="settingPreOpenHours" min="1" max="12" step="0.5" value="4">
+      <div class="settings-hint">例：4 = 開店前 4 小時內才能回報；超過此時間提交視為無效並扣信任分</div>
+    </div>
+    <div class="settings-field">
+      <label>GPS 距離限制（公尺）</label>
+      <input type="number" id="settingGpsRadius" min="100" max="2000" step="50" value="500">
+      <div class="settings-hint">例：500 = 距離店家 500 公尺內才能回報；設太大失去意義，建議 300–800</div>
+    </div>
+  </div>
+  <div class="settings-footer">
+    <button class="settings-save" id="settingsSaveBtn">儲存設定</button>
+    <span class="settings-status" id="settingsStatus"></span>
   </div>
 </div>
 
@@ -254,6 +299,7 @@ auth.onAuthStateChanged(async user => {
   gate.style.display = 'none';
   app.style.display  = 'block';
   loadUsers();
+  loadQueueSettings();
 });
 
 async function loadUsers() {
@@ -411,6 +457,40 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// ── 排隊回報設定 ────────────────────────────────────────────────────
+async function loadQueueSettings() {
+  try {
+    const snap = await db.collection('meta').doc('queueSettings').get();
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.preOpenHours  != null) document.getElementById('settingPreOpenHours').value = d.preOpenHours;
+      if (d.gpsRadiusMeters != null) document.getElementById('settingGpsRadius').value  = d.gpsRadiusMeters;
+    }
+  } catch(e) { console.warn('載入排隊設定失敗', e); }
+  document.getElementById('settingsCard').style.display = '';
+}
+
+document.getElementById('settingsSaveBtn').addEventListener('click', async () => {
+  const hours  = parseFloat(document.getElementById('settingPreOpenHours').value);
+  const radius = parseInt(document.getElementById('settingGpsRadius').value, 10);
+  const status = document.getElementById('settingsStatus');
+
+  if (isNaN(hours) || hours < 1 || hours > 12) { status.textContent = '⚠️ 小時數需在 1–12 之間'; return; }
+  if (isNaN(radius) || radius < 100 || radius > 2000) { status.textContent = '⚠️ 距離需在 100–2000 公尺之間'; return; }
+
+  const btn = document.getElementById('settingsSaveBtn');
+  btn.disabled = true; btn.textContent = '儲存中…';
+  try {
+    await db.collection('meta').doc('queueSettings').set({ preOpenHours: hours, gpsRadiusMeters: radius });
+    status.textContent = `✅ 已儲存（${new Date().toLocaleTimeString('zh-TW')}）`;
+    showToast('✅ 排隊設定已更新');
+  } catch(e) {
+    status.textContent = '❌ 儲存失敗';
+    showToast('❌ 儲存失敗：' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '儲存設定';
+});
 </script>
 </body>
 </html>
