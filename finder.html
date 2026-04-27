@@ -2151,6 +2151,16 @@ auth.onAuthStateChanged(async user => {
 
       // 第一次登入：設定基本欄位 + 自動分配 memberNo
       if (!userData.role) {
+        // Step 1：先寫入基本欄位（獨立，確保一定成功）
+        try {
+          await userRef.update({
+            role: 'viewer', level: 0, postCount: 0, likeCount: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        } catch (e) {
+          console.error('[首次登入] 寫入基本欄位失敗：', e);
+        }
+        // Step 2：分配 memberNo（獨立，失敗不影響 Step 1）
         try {
           const counterRef = db.collection('meta').doc('counters');
           const cs = await counterRef.get();
@@ -2158,13 +2168,9 @@ auth.onAuthStateChanged(async user => {
           cs.exists
             ? await counterRef.update({ memberCount: memberNo })
             : await counterRef.set({ memberCount: 1 });
-          await userRef.update({
-            role: 'viewer', level: 0, postCount: 0, likeCount: 0,
-            memberNo,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
+          await userRef.update({ memberNo });
         } catch (e) {
-          console.error('[首次登入] 寫入預設欄位失敗：', e);
+          console.error('[首次登入] memberNo 分配失敗：', e);
         }
         const snap2 = await userRef.get();
         Object.assign(userData, snap2.data());
