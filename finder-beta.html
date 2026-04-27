@@ -2895,12 +2895,16 @@ auth.onAuthStateChanged(async user => {
       const snap     = await userRef.get();
       const userData = snap.data();
 
-      // 第一次登入：設定基本欄位（不依賴 meta/counters，memberNo 由 admin 手動補填）
+      // 第一次登入：設定基本欄位（memberNo 由 admin 手動補填）
       if (!userData.role) {
-        await userRef.update({
-          role: 'viewer', level: 0, postCount: 0, likeCount: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+        try {
+          await userRef.update({
+            role: 'viewer', level: 0, postCount: 0, likeCount: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        } catch (e) {
+          console.error('[首次登入] 寫入預設欄位失敗，請確認 Firestore rules noPrivilegeEscalation 已允許首次設定 role=viewer：', e);
+        }
         const snap2 = await userRef.get();
         Object.assign(userData, snap2.data());
       }
