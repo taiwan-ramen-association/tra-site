@@ -141,21 +141,20 @@ def step_fill_city_district():
             if cleaned != addr:
                 row['地址'] = cleaned
 
-        need_city = not row.get('縣市', '').strip()
-        need_dist = not row.get('鄉鎮市區', '').strip()
-        if not need_city and not need_dist:
-            continue
-
+        # 永遠重新從地址解析，若有新值則覆蓋（處理行政區升格等名稱異動）
         city, dist = parse(row.get('地址', ''))
-        if need_city and city:
+        changed = False
+        if city and row.get('縣市') != city:
+            print(f'    ✓ {row["店名"]}：縣市 {row.get("縣市","（空）")!r} → {city!r}')
             row['縣市'] = city
-        if need_dist and dist:
+            changed = True
+        if dist and row.get('鄉鎮市區') != dist:
+            print(f'    ✓ {row["店名"]}：鄉鎮市區 {row.get("鄉鎮市區","（空）")!r} → {dist!r}')
             row['鄉鎮市區'] = dist
-
-        if city or dist:
+            changed = True
+        if changed:
             updated += 1
-            print(f'    ✓ {row["店名"]}：{city} {dist}')
-        else:
+        elif not city:
             print(f'    ✗ {row["店名"]}：地址解析失敗')
 
     save_data(rows)
@@ -196,10 +195,9 @@ def step_geocode():
         if not url or not url.startswith('http'):
             return None, None
         r = requests.get(url, headers=UA, timeout=10, verify=False, allow_redirects=True)
+        # !3d!4d 是 Google Maps 標記點的精確座標
+        # 不使用 /@ 的 fallback：那是地圖視角中心，縮放狀態不同會漂移到海上
         m = re.search(r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)', r.url)
-        if m:
-            return float(m.group(1)), float(m.group(2))
-        m = re.search(r'/@(-?\d+\.\d+),(-?\d+\.\d+)', r.url)
         if m:
             return float(m.group(1)), float(m.group(2))
         return None, None
@@ -315,7 +313,7 @@ def step_normalize_days():
 # ════════════════════════════════════════════════════════════════════════════════
 # STEP 6：正規化開幕日期
 # ════════════════════════════════════════════════════════════════════════════════
-DATE_FIELDS = ['開幕日']
+DATE_FIELDS = ['開幕日', '歇業日']
 
 def normalize_date(value):
     """各種日期格式統一為 YYYY-MM-DD，無法辨識則原樣返回"""
@@ -355,7 +353,7 @@ def normalize_date(value):
     return v  # 無法辨識，原樣返回
 
 def step_normalize_dates():
-    section(6, '正規化開幕日期（→ YYYY-MM-DD）')
+    section(6, '正規化開幕日 / 歇業日（→ YYYY-MM-DD）')
 
     rows    = load_data()
     updated = 0
@@ -375,6 +373,15 @@ def step_normalize_dates():
                 print(f'    ✓ {row["店名"]} [{field}]  {original!r} → {normalized!r}')
             else:
                 failed.append((row['店名'], field, original))
+
+        # 開幕日正規化後同步更新開幕月份
+        d = str(row.get('開幕日', '')).strip()
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', d):
+            month = int(d.split('-')[1])
+            if row.get('開幕月份') != month:
+                print(f'    ✓ {row["店名"]}：開幕月份 {row.get("開幕月份","（空）")} → {month}')
+                row['開幕月份'] = month
+                updated += 1
 
     save_data(rows)
     print(f'\n  ✅ 完成：更新 {updated} 個欄位（共 {len(rows)} 筆）')
@@ -603,7 +610,7 @@ STEPS = [
     (3, '補 lat/lng 座標',                step_geocode),
     (4, '正規化營業時段格式',             step_normalize_hours),
     (5, '正規化星期排序',                 step_normalize_days),
-    (6, '正規化開幕日期（→ YYYY-MM-DD）', step_normalize_dates),
+    (6, '正規化開幕日 / 歇業日（→ YYYY-MM-DD）', step_normalize_dates),
     (7, '分配店家 ID',                    step_assign_ids),
 ]
 

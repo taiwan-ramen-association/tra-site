@@ -173,14 +173,21 @@ const _COUNTY_RENAME = {
   '高雄縣': '高雄市',
 };
 
-// 由 districts.json 建立的行政區 Set：{ county → Set(districtNames) }
-// 載入後由 initDistrictSets() 填入
+// 由 districts.json 建立的查詢結構：{ county → { set, baseMap } }
+// set：現行名稱 Set（快速確認是否已是正確名稱）
+// baseMap：字根 → 現行名稱（用於舊名推導，不限定改成「區」）
 let _districtSets = {};
 
 function initDistrictSets(districtsData) {
   _districtSets = {};
   for (const [county, dists] of Object.entries(districtsData)) {
-    _districtSets[norm(county)] = new Set(dists.map(norm));
+    const c   = norm(county);
+    const set = new Set(dists.map(norm));
+    const baseMap = {};
+    for (const d of set) {
+      if (/[鄉鎮市區]$/.test(d)) baseMap[d.slice(0, -1)] = d;
+    }
+    _districtSets[c] = { set, baseMap };
   }
 }
 
@@ -189,10 +196,12 @@ function normGeo(countyRaw, townRaw) {
   let town   = norm(townRaw);
   // 縣市改名
   county = _COUNTY_RENAME[county] || county;
-  // 若 town 尾字是鄉/鎮/市，嘗試換成「區」後在 districts.json 中驗證
-  if (/[鄉鎮市]$/.test(town)) {
-    const candidate = town.slice(0, -1) + '區';
-    if (_districtSets[county]?.has(candidate)) town = candidate;
+  // 行政區改名：若現行名稱 Set 中找不到，以字根在 baseMap 中查新名
+  // 例：湖口鄉→湖口鎮、龍潭鄉→龍潭區、板橋市→板橋區
+  const info = _districtSets[county];
+  if (info && !info.set.has(town) && /[鄉鎮市區]$/.test(town)) {
+    const match = info.baseMap[town.slice(0, -1)];
+    if (match) town = match;
   }
   return county + '_' + town;
 }
@@ -259,7 +268,9 @@ async function loadAll(uid) {
     const [shopsRes, visitsSnap, geoRes, districtsRes] = await Promise.all([
       fetch('data/data.json').then(r => r.json()),
       db.collection('userVisits').doc(uid).get(),
-      fetch('https://cdn.jsdelivr.net/gh/g0v/twgeojson@master/json/twTown1982.geo.json').then(r => r.json()),
+      fetch('https://cdn.jsdelivr.net/gh/g0v/twgeojson@master/json/twTown2010.geo.json')
+        .then(r => { if (!r.ok) throw new Error('2010 not found'); return r.json(); })
+        .catch(() => fetch('https://cdn.jsdelivr.net/gh/g0v/twgeojson@master/json/twTown1982.geo.json').then(r => r.json())),
       fetch('data/districts.json').then(r => r.json()),
     ]);
     initDistrictSets(districtsRes);
