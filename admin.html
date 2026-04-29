@@ -368,6 +368,9 @@
   <h3>📱 已訂閱推播的裝置</h3>
   <p class="reports-desc">每台裝置的 FCM token 獨立儲存，不會互相覆蓋。可單獨移除特定裝置。</p>
   <div id="devicesList" style="font-size:13px;color:var(--stone)">載入中…</div>
+  <div style="margin-top:10px">
+    <button id="clearTokensBtn" style="padding:5px 12px;background:var(--paper);border:1px solid var(--line);border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--stone)">🗑 清除全部 token，重新訂閱本裝置</button>
+  </div>
 </div>
 
 <div class="reports-card" id="reportsCard" style="display:none">
@@ -900,6 +903,22 @@ async function registerFcmToken(uid, manual = false) {
 
 document.getElementById('notifyBtn').addEventListener('click', () => {
   if (_fcmUid) registerFcmToken(_fcmUid, true);
+});
+
+document.getElementById('clearTokensBtn').addEventListener('click', async () => {
+  if (!_fcmUid) return;
+  if (!confirm('清除全部裝置 token 並重新訂閱本裝置？')) return;
+  try {
+    await db.collection('users').doc(_fcmUid).update({
+      fcmTokens: [],
+      fcmToken:  firebase.firestore.FieldValue.delete(),
+    });
+    showToast('已清除，重新訂閱中…');
+    await registerFcmToken(_fcmUid, true);
+    renderFcmDevices(_fcmUid);
+  } catch(e) {
+    showToast('❌ 失敗：' + e.message);
+  }
 });
 
 async function renderFcmDevices(uid) {
