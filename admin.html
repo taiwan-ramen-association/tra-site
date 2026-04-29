@@ -883,8 +883,9 @@ async function registerFcmToken(uid, manual = false) {
     });
     if (!token) { updateNotifyBtn('off'); return; }
 
-    // 用陣列儲存多裝置 token，避免重複
+    // 同時寫單一欄位（舊 Cloud Function 相容）與陣列（新版多裝置）
     await db.collection('users').doc(uid).update({
+      fcmToken:  token,
       fcmTokens: firebase.firestore.FieldValue.arrayUnion(token),
     });
     updateNotifyBtn('on');
