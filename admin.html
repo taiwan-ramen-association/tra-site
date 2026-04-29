@@ -237,6 +237,7 @@
   <div style="display:flex;gap:10px;align-items:center">
     <a href="database.html" target="_blank" style="color:#ffd;font-size:13px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:6px;">📊 資料庫</a>
     <a href="finder-beta.html" target="_blank" style="color:#ffd;font-size:13px;text-decoration:none;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:6px;">🧪 開啟 BETA</a>
+    <button id="notifyBtn" title="開啟推播通知" style="background:rgba(255,255,255,0.15);border:none;color:#ffd;font-size:13px;padding:4px 10px;border-radius:6px;cursor:pointer;">🔔 開啟通知</button>
     <a href="finder.html">← 回查詢頁</a>
   </div>
 </header>
@@ -830,32 +831,73 @@ document.getElementById('reportsClearBtn').addEventListener('click', async () =>
 
 // ── FCM 推播 Token 登記 ───────────────────────────────────────────────────
 const VAPID_KEY = 'BD9PCYXQMk-XzFot9upaS2N7tj1d8MJECT5vscLJR6OMysWlm-fHRlvvttjv1W0E_vTs8kitPFgu2tmNMJ6akEU';
+let _fcmUid = null;
 
-async function registerFcmToken(uid) {
+function updateNotifyBtn(status) {
+  const btn = document.getElementById('notifyBtn');
+  if (!btn) return;
+  const map = {
+    on:      { text: '🔔 通知已開啟', style: 'background:rgba(100,255,100,0.25)' },
+    off:     { text: '🔕 通知已關閉', style: 'background:rgba(255,100,100,0.25)' },
+    default: { text: '🔔 開啟通知',   style: 'background:rgba(255,255,255,0.15)' },
+  };
+  const s = map[status] || map.default;
+  btn.textContent = s.text;
+  btn.setAttribute('style', `${s.style};border:none;color:#ffd;font-size:13px;padding:4px 10px;border-radius:6px;cursor:pointer;`);
+}
+
+async function registerFcmToken(uid, manual = false) {
+  _fcmUid = uid;
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    updateNotifyBtn('off');
+    if (manual) showToast('❌ 此瀏覽器不支援推播通知');
+    return;
+  }
+  // 已被拒絕且非手動觸發 → 不再煩擾
+  if (Notification.permission === 'denied' && !manual) {
+    updateNotifyBtn('off'); return;
+  }
   try {
-    const messaging = firebase.messaging();
+    // 明確註冊 firebase-messaging-sw.js（手機必要）
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      console.log('[FCM] 通知權限未授予');
+      updateNotifyBtn('off');
+      if (manual) showToast('請在瀏覽器設定中允許通知');
       return;
     }
-    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
-    if (!token) return;
-    // 只在 token 有變化時才寫入，避免不必要的 Firestore 寫入
+
+    const messaging = firebase.messaging();
+    const token = await messaging.getToken({
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swReg,
+    });
+    if (!token) { updateNotifyBtn('off'); return; }
+
     const snap = await db.collection('users').doc(uid).get();
     if (snap.data()?.fcmToken !== token) {
       await db.collection('users').doc(uid).update({ fcmToken: token });
-      console.log('[FCM] Token 已更新');
     }
-    // Token 輪換：當 FCM 刷新時自動更新
+    updateNotifyBtn('on');
+    if (manual) showToast('✅ 推播通知已啟用！');
+
+    // Token 輪換
     messaging.onTokenRefresh(async () => {
-      const newToken = await messaging.getToken({ vapidKey: VAPID_KEY });
+      const newToken = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
       if (newToken) await db.collection('users').doc(uid).update({ fcmToken: newToken });
     });
   } catch(e) {
+    updateNotifyBtn('off');
     console.warn('[FCM] Token 登記失敗：', e.message);
+    if (manual) showToast('❌ 推播設定失敗：' + e.message);
   }
 }
+
+document.getElementById('notifyBtn').addEventListener('click', () => {
+  if (_fcmUid) registerFcmToken(_fcmUid, true);
+});
 </script>
 </body>
 </html>
