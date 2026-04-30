@@ -2476,18 +2476,40 @@ async function penalizeTrustScore(delta) {
 }
 
 // ── Places API（照片）──────────────────────────────────────────────────────
-const PLACES_KEY  = 'AIzaSyBek6fDRbXZhxenlSgwR1DLaVRJjrxYUOU';
-const photoCache  = {}; // shopId → { urls: [], attribution: string } | 'loading' | null
+const PLACES_KEY       = 'AIzaSyBek6fDRbXZhxenlSgwR1DLaVRJjrxYUOU';
+const photoCache       = {}; // 記憶體快取：shopId → data | 'loading' | null
+const PHOTO_LS_PREFIX  = 'ramen_photo_';
 
-async function loadShopPhotos(shop, panel) {
+function lsGetPhoto(shopId) {
+  try { const v = localStorage.getItem(PHOTO_LS_PREFIX + shopId); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+function lsSetPhoto(shopId, data) {
+  try { localStorage.setItem(PHOTO_LS_PREFIX + shopId, JSON.stringify(data)); } catch {}
+}
+function lsRemovePhoto(shopId) {
+  try { localStorage.removeItem(PHOTO_LS_PREFIX + shopId); } catch {}
+}
+
+// isRetry=true 時不再觸發二次重抓，避免無限循環
+async function loadShopPhotos(shop, panel, isRetry = false) {
   const shopId = shop['ID'];
 
-  // 已快取
+  // 1. 記憶體快取
   if (photoCache[shopId] && photoCache[shopId] !== 'loading') {
-    renderPhotoPanel(photoCache[shopId], panel);
+    renderPhotoPanel(photoCache[shopId], panel, isRetry ? null : shop);
     return;
   }
   if (photoCache[shopId] === 'loading') return;
+
+  // 2. localStorage 快取（跨重整、跨 App 存活）
+  if (!isRetry) {
+    const cached = lsGetPhoto(shopId);
+    if (cached) {
+      photoCache[shopId] = cached;
+      renderPhotoPanel(cached, panel, shop); // 仍需驗證圖片是否有效
+      return;
+    }
+  }
 
   photoCache[shopId] = 'loading';
   panel.innerHTML = '<p class="tab-placeholder" style="padding:20px 0">載入中…</p>';
@@ -2510,15 +2532,18 @@ async function loadShopPhotos(shop, panel) {
       `https://places.googleapis.com/v1/${p.name}/media?maxWidthPx=800&key=${PLACES_KEY}`
     );
     const attribution = photos[0]?.authorAttributions?.[0]?.displayName ?? '';
-    photoCache[shopId] = { urls, attribution };
-    renderPhotoPanel(photoCache[shopId], panel);
+    const data = { urls, attribution };
+    photoCache[shopId] = data;
+    lsSetPhoto(shopId, data);
+    renderPhotoPanel(data, panel, isRetry ? null : shop);
   } catch(e) {
     photoCache[shopId] = null;
     panel.innerHTML = '<p class="tab-placeholder">照片載入失敗，請稍後再試</p>';
   }
 }
 
-function renderPhotoPanel({ urls, attribution }, panel) {
+// shop 傳入時才啟用「≤1 張成功 → 清快取重抓」邏輯
+function renderPhotoPanel({ urls, attribution }, panel, shop = null) {
   if (!urls.length) {
     panel.innerHTML = '<p class="tab-placeholder">Google Maps 尚無此店照片</p>';
     return;
@@ -2527,12 +2552,38 @@ function renderPhotoPanel({ urls, attribution }, panel) {
     <div class="photo-grid">
       ${urls.map(u => `
         <a href="${u}" target="_blank" rel="noopener">
-          <img class="loading" src="${u}" alt="店家照片"
-               onload="this.classList.replace('loading','loaded')"
-               onerror="this.closest('a').remove()">
+          <img class="loading" src="${u}" alt="店家照片">
         </a>`).join('')}
     </div>
     <p class="photo-attribution">圖片來源：Google Maps${attribution ? '・' + attribution : ''}</p>`;
+
+  // JS 附掛 onload / onerror，計算成功張數，判斷是否需重抓
+  const imgs  = [...panel.querySelectorAll('img')];
+  const total = imgs.length;
+  let settled = 0, loaded = 0;
+
+  imgs.forEach(img => {
+    img.onload = () => {
+      img.classList.replace('loading', 'loaded');
+      loaded++; settled++;
+      checkDone();
+    };
+    img.onerror = () => {
+      img.closest('a')?.remove();
+      settled++;
+      checkDone();
+    };
+  });
+
+  function checkDone() {
+    if (settled < total) return;
+    if (loaded <= 1 && shop) {
+      // 快取的 URL 已失效，清除後重新向 API 取得最新照片
+      lsRemovePhoto(shop['ID']);
+      delete photoCache[shop['ID']];
+      loadShopPhotos(shop, panel, true); // isRetry=true，不再二次重抓
+    }
+  }
 }
 
 // ── Queue ──────────────────────────────────────────────────────────────────
