@@ -386,6 +386,11 @@
         <td class="center"><select class="ff-select" data-col="vis"></select></td>
         <td class="center"><select class="ff-select" data-col="perm"></select></td>
       </tr>
+      <tr data-feat="reviews">
+        <td><span class="ff-feat-icon">💬</span><span class="ff-feat-name">評論</span></td>
+        <td class="center"><select class="ff-select" data-col="vis"></select></td>
+        <td class="center"><select class="ff-select" data-col="perm"></select></td>
+      </tr>
     </tbody>
   </table>
   <div class="ff-footer">
@@ -425,6 +430,32 @@
     <tbody id="reportsTbody"></tbody>
   </table>
   <div class="reports-empty" id="reportsEmpty" style="display:none">目前沒有問題回報 🎉</div>
+</div>
+
+<div class="reports-card" id="reviewsCard" style="display:none">
+  <h3>💬 用戶評論管理</h3>
+  <p class="reports-desc">所有店家的評論，可依店家篩選。管理員可直接刪除違規或不當內容。</p>
+  <div class="reports-toolbar">
+    <span class="reports-count" id="reviewsCount">載入中…</span>
+    <input type="text" id="reviewsShopFilter" placeholder="依店名篩選…"
+      style="padding:5px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-family:inherit;background:var(--input-bg);color:var(--ink);flex:1;max-width:200px">
+    <button class="reports-reload-btn" id="reviewsReloadBtn">🔄 重新載入</button>
+  </div>
+  <table class="reports-table" id="reviewsTable" style="display:none">
+    <thead>
+      <tr>
+        <th style="width:120px">時間</th>
+        <th style="width:120px">店家</th>
+        <th style="width:60px">評分</th>
+        <th>內容</th>
+        <th style="width:80px">照片</th>
+        <th style="width:90px">評論者</th>
+        <th style="width:52px"></th>
+      </tr>
+    </thead>
+    <tbody id="reviewsTbody"></tbody>
+  </table>
+  <div class="reports-empty" id="reviewsEmpty" style="display:none">目前沒有評論</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -500,6 +531,7 @@ auth.onAuthStateChanged(async user => {
   loadQueueSettings();
   loadFeatureFlags();
   loadIssueReports();
+  loadAdminReviews();
   registerFcmToken(user.uid);
   renderFcmDevices(user.uid);
 });
@@ -676,6 +708,7 @@ const FF_DEFAULTS = {
   queueReport: { vis: 'director', perm: 'director' },
   rankings:    { vis: 'viewer',   perm: 'viewer'   },
   domination:  { vis: 'viewer',   perm: 'viewer'   },
+  reviews:     { vis: 'all',      perm: 'viewer'   },
 };
 
 function buildFfSelects() {
@@ -1017,6 +1050,107 @@ async function removeFcmToken(uid, token) {
     showToast('❌ 移除失敗：' + e.message);
   }
 }
+
+// ── 評論管理 ─────────────────────────────────────────────────────────────────
+let _reviewLastDoc = null;
+
+async function loadAdminReviews(append = false) {
+  const card   = document.getElementById('reviewsCard');
+  const tbody  = document.getElementById('reviewsTbody');
+  const table  = document.getElementById('reviewsTable');
+  const empty  = document.getElementById('reviewsEmpty');
+  const count  = document.getElementById('reviewsCount');
+  const filter = document.getElementById('reviewsShopFilter').value.trim().toLowerCase();
+  card.style.display = '';
+
+  if (!append) {
+    _reviewLastDoc = null;
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    empty.style.display = 'none';
+    count.textContent = '載入中…';
+  }
+
+  try {
+    let q = db.collection('reviews').orderBy('createdAt', 'desc').limit(30);
+    if (_reviewLastDoc) q = q.startAfter(_reviewLastDoc);
+    const snap = await q.get();
+    const docs = filter
+      ? snap.docs.filter(d => (d.data().shopName || '').toLowerCase().includes(filter))
+      : snap.docs;
+
+    if (docs.length) _reviewLastDoc = snap.docs[snap.docs.length - 1];
+
+    if (!append) {
+      const totalSnap = await db.collection('reviews').count().get();
+      count.textContent = `共 ${totalSnap.data().count} 則`;
+    }
+
+    if (!docs.length && !append) {
+      empty.style.display = '';
+      return;
+    }
+    table.style.display = 'table';
+
+    const storage = firebase.storage();
+    tbody.insertAdjacentHTML('beforeend', docs.map(doc => {
+      const d  = doc.data();
+      const ts = d.createdAt
+        ? new Date(d.createdAt.seconds * 1000).toLocaleString('zh-TW', { hour12: false })
+        : '─';
+      const stars = '★'.repeat(d.rating || 0) + '☆'.repeat(5 - (d.rating || 0));
+      const text  = (d.text || '').replace(/</g, '&lt;').slice(0, 60) + ((d.text || '').length > 60 ? '…' : '');
+      const photoCount = (d.photos || []).length;
+      return `<tr data-docid="${doc.id}" data-shopid="${d.shopId || ''}">
+        <td style="white-space:nowrap;font-size:11px;color:var(--stone)">${ts}</td>
+        <td style="font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis">${d.shopId || '─'}</td>
+        <td style="color:#f5a623;font-size:12px">${stars}</td>
+        <td style="max-width:220px;word-break:break-all;font-size:12px">${text || '<span style="color:#bbb">（無文字）</span>'}</td>
+        <td style="font-size:11px;color:var(--stone)">${photoCount ? `📷 ${photoCount} 張` : '─'}</td>
+        <td style="font-size:11px;color:var(--stone);max-width:80px;overflow:hidden;text-overflow:ellipsis">${d.displayName || '─'}</td>
+        <td><button class="report-del-btn" data-docid="${doc.id}">刪除</button></td>
+      </tr>`;
+    }).join(''));
+
+    // 刪除按鈕
+    tbody.querySelectorAll('.report-del-btn').forEach(btn => {
+      if (btn._bound) return; btn._bound = true;
+      btn.addEventListener('click', async () => {
+        if (!confirm('確定刪除此評論？')) return;
+        btn.disabled = true;
+        try {
+          const row    = btn.closest('tr');
+          const docId  = btn.dataset.docid;
+          const shopId = row.dataset.shopid;
+          const rSnap  = await db.collection('reviews').doc(docId).get();
+          if (rSnap.exists) {
+            const photos = rSnap.data().photos || [];
+            const stg = firebase.storage();
+            await Promise.all(photos.flatMap((_, i) => [
+              stg.ref(`reviews/${shopId}/${docId}/photo_${i}_orig.webp`).delete().catch(() => {}),
+              stg.ref(`reviews/${shopId}/${docId}/photo_${i}_thumb.webp`).delete().catch(() => {}),
+            ]));
+            await db.collection('reviews').doc(docId).delete();
+          }
+          row.remove();
+          showToast('✅ 已刪除評論');
+        } catch(e) {
+          showToast('❌ 刪除失敗：' + e.message);
+          btn.disabled = false;
+        }
+      });
+    });
+
+  } catch(e) {
+    count.textContent = '載入失敗';
+    showToast('❌ 載入評論失敗：' + e.message);
+  }
+}
+
+document.getElementById('reviewsReloadBtn').addEventListener('click', () => loadAdminReviews());
+document.getElementById('reviewsShopFilter').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadAdminReviews();
+});
 </script>
 </body>
 </html>
