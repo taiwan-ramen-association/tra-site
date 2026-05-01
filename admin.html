@@ -1082,8 +1082,8 @@ async function loadAdminReviews(append = false) {
     if (docs.length) _reviewLastDoc = snap.docs[snap.docs.length - 1];
 
     if (!append) {
-      const totalSnap = await db.collection('reviews').count().get();
-      count.textContent = `共 ${totalSnap.data().count} 則`;
+      const totalSnap = await db.collection('reviews').get();
+      count.textContent = `共 ${totalSnap.size} 則`;
     }
 
     if (!docs.length && !append) {
