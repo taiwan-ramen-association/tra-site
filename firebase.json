@@ -9,5 +9,8 @@
         "firebase-debug.log"
       ]
     }
-  ]
+  ],
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  }
 }
