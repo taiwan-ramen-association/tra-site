@@ -71,7 +71,12 @@
   .btn-google:hover { background: var(--hover-bg); }
   .btn-google svg { width: 18px; height: 18px; }
 
-  #app { display: none; max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  #app { display: none; max-width: 1440px; margin: 0 auto; padding: 24px 16px; }
+
+  /* cards outside #app also follow the same width */
+  .settings-card, .ff-card, .reports-card, #devicesCard {
+    max-width: 1440px; margin-left: auto; margin-right: auto;
+  }
 
   .toolbar {
     display: flex; align-items: center; justify-content: space-between;

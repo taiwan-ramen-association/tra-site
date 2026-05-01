@@ -612,6 +612,53 @@
   .empty-state p { font-size: 14px; }
 
   #mainContent { display: none; }
+  #mainContent.mc-show { display: block; }
+
+  /* ── DESKTOP SIDEBAR LAYOUT (≥900px) ── */
+  @media (min-width: 900px) {
+    body { overflow: hidden; }
+
+    #mainContent.mc-show {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      grid-template-rows: auto 1fr;
+      height: calc(100vh - var(--header-h, 56px));
+      overflow: hidden;
+    }
+
+    /* Filter bar → left sidebar */
+    .filter-bar {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      border-right: 1px solid var(--line);
+      border-bottom: none;
+      overflow-y: auto;
+      padding: 18px 16px;
+    }
+    .search-box { margin-bottom: 14px; }
+    .filter-row { flex-direction: column; gap: 12px; }
+    .filter-group select { font-size: 13px; padding: 8px 24px 8px 10px; }
+
+    /* Result bar → top of right panel */
+    .result-bar {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    /* Card list → scrollable right panel */
+    .card-list {
+      grid-column: 2;
+      grid-row: 2;
+      overflow-y: auto;
+      padding: 10px 14px 20px;
+    }
+
+    /* Map → same grid cell as card list */
+    #mapContainer {
+      grid-column: 2;
+      grid-row: 2;
+    }
+  }
 
   /* ── LOCATE ── */
   .locate-btn, .now-open-btn {
@@ -1259,7 +1306,7 @@ buildTimeOptions();
 async function loadData() {
   document.getElementById('loadingScreen').style.display = 'flex';
   document.getElementById('errorScreen').style.display   = 'none';
-  document.getElementById('mainContent').style.display   = 'none';
+  document.getElementById('mainContent').classList.remove('mc-show');
 
   loadQueueSettings();  // 非同步背景載入，不阻塞主流程
   loadFeatureFlags();   // 同上
@@ -1296,7 +1343,7 @@ async function loadData() {
     });
 
     document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('mainContent').style.display   = 'block';
+    document.getElementById('mainContent').classList.add('mc-show');
     render();
     const bdShops = ALL_DATA.filter(s => isBirthday(s)).map(s => s['店名']);
     if (bdShops.length) launchFireworks(bdShops);
@@ -3179,7 +3226,7 @@ function showBetaGate(msg, showLogin = false) {
   document.getElementById('betaGateMsg').textContent = msg;
   document.getElementById('betaLoginBtn').style.display = showLogin ? 'flex' : 'none';
   document.getElementById('loadingScreen').style.display = 'none';
-  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('mainContent').classList.remove('mc-show');
 }
 
 document.getElementById('betaLoginBtn').addEventListener('click', () => {
@@ -3319,6 +3366,16 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
   const homeLink = document.querySelector('.drawer a[href="index.html"]');
   if (homeLink) homeLink.style.display = 'none';
 }
+
+// ── Desktop header height var (for sidebar layout calc) ─────────────────────
+(function() {
+  function setHH() {
+    const h = document.querySelector('header');
+    if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+  }
+  setHH();
+  window.addEventListener('resize', setHH);
+})();
 </script>
 </body>
 </html>
