@@ -691,7 +691,8 @@
   #mainContent.mc-show { display: block; }
   #pageReviews {
     position: fixed;
-    top: var(--header-h, 56px); left: 0; right: 0; bottom: 52px;
+    top: var(--header-h, 56px); left: 0; right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 82px);
     overflow-y: auto;
     background: var(--bg);
     z-index: 800;
@@ -760,9 +761,9 @@
 
   /* 底部導覽紅點 */
   .bnav-badge {
-    position: absolute; top: 6px; right: calc(50% - 14px);
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--red); border: 1.5px solid rgba(255,255,255,0.88);
+    position: absolute; top: 5px; right: calc(50% - 16px);
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--red); border: 1.5px solid rgba(255,255,255,0.78);
     display: none; pointer-events: none;
   }
   .bnav-item.has-badge .bnav-badge { display: block; }
@@ -821,7 +822,7 @@
 
     .rf-list-inner { max-width: 680px; margin: 0 auto; }
     .rf-feed-title { font-size: 19px; }
-    #pageReviews { padding: 20px 24px 60px; bottom: 40px; }
+    #pageReviews { padding: 20px 24px 60px; bottom: calc(env(safe-area-inset-bottom, 0px) + 58px); }
   }
 
   /* ── LOCATE ── */
@@ -1142,44 +1143,65 @@
 
   /* ── BOTTOM NAV ── */
   .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
-    display: flex;
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(0,0,0,0.08);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    left: 50%; transform: translateX(-50%);
+    width: calc(100% - 24px); max-width: 480px;
+    z-index: 900;
+    display: flex; gap: 3px; padding: 5px;
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: 0 4px 28px rgba(0,0,0,0.13), 0 1px 6px rgba(0,0,0,0.07);
   }
   .bnav-item {
-    flex: 1; display: flex; flex-direction: column;
+    flex: 1; position: relative;
+    display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px;
-    padding: 8px 4px; min-height: 52px;
+    padding: 8px 6px 7px; min-height: 50px;
     border: none; background: none; cursor: pointer;
-    text-decoration: none; color: var(--stone);
+    text-decoration: none;
+    color: rgba(90,90,100,0.7);
+    border-radius: 17px;
     font-family: 'Noto Sans TC', sans-serif;
-    transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .bnav-item:active { background: rgba(0,0,0,0.04); }
-  .bnav-item.active { color: var(--red); }
-  .bnav-icon { font-size: 20px; line-height: 1; }
-  .bnav-icon-up { font-size: 22px; font-weight: 700; line-height: 1; }
-  .bnav-label { font-size: 11px; font-weight: 500; letter-spacing: 0.3px; }
-  /* Mobile: extra bottom padding for card list + filter bar */
-  .card-list { padding-bottom: 80px !important; }
+  .bnav-item:active:not(.active) { background: rgba(0,0,0,0.06); }
+  .bnav-item.active {
+    background: rgba(200,30,30,0.1);
+    color: var(--red);
+  }
+  .bnav-svg { width: 22px; height: 22px; display: block; flex-shrink: 0; }
+  .bnav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.2px; line-height: 1; }
+  /* card-list padding for floating nav */
+  .card-list { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px) !important; }
+
+  /* Dark mode */
   body.dark .bottom-nav {
-    background: rgba(26,24,22,0.92);
-    border-top-color: rgba(255,255,255,0.1);
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+    background: rgba(28,26,24,0.88);
+    border-color: rgba(255,255,255,0.08);
+    box-shadow: 0 4px 28px rgba(0,0,0,0.45);
   }
-  body.dark .bnav-item { color: #888; }
-  body.dark .bnav-item.active { color: var(--red); }
+  body.dark .bnav-item { color: rgba(180,180,185,0.6); }
+  body.dark .bnav-item.active {
+    background: rgba(200,50,50,0.18);
+    color: var(--red);
+  }
+
+  /* Desktop: align to right panel */
   @media (min-width: 900px) {
-    .bottom-nav { left: 300px; } /* 對齊電腦版右側內容欄 */
+    .bottom-nav {
+      left: calc(300px + 12px); right: 12px;
+      transform: none; width: auto; max-width: none;
+      border-radius: 16px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+    }
     .bnav-label { display: none; }
-    .bnav-item { min-height: 40px; padding: 6px 8px; }
-    .bnav-icon { font-size: 17px; }
-    .bnav-icon-up { font-size: 19px; }
-    .card-list { padding-bottom: 60px !important; }
+    .bnav-item { min-height: 36px; padding: 6px 10px; border-radius: 12px; }
+    .bnav-svg { width: 19px; height: 19px; }
+    .card-list { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important; }
   }
 </style>
 </head>
@@ -1505,21 +1527,36 @@
 
 <!-- Bottom Navigation Bar -->
 <nav class="bottom-nav" id="bottomNav">
+  <!-- 搜尋器 -->
   <button class="bnav-item active" id="bnavFinder">
-    <span class="bnav-icon">🔍</span>
+    <svg class="bnav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7.5"/>
+      <line x1="20.5" y1="20.5" x2="16.2" y2="16.2"/>
+    </svg>
     <span class="bnav-label">搜尋器</span>
   </button>
+  <!-- 貼文 -->
   <button class="bnav-item" id="bnavPosts">
-    <span class="bnav-icon">📝</span>
+    <svg class="bnav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
     <span class="bnav-label">貼文</span>
     <span class="bnav-badge" id="bnavPostsBadge"></span>
   </button>
+  <!-- 查詢（觸發搜尋框） -->
   <button class="bnav-item" id="bnavSearch">
-    <span class="bnav-icon">🔎</span>
+    <svg class="bnav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="3"/>
+      <line x1="7" y1="12" x2="11" y2="12"/>
+      <line x1="13" y1="12" x2="17" y2="12" stroke-dasharray="1.5 2"/>
+    </svg>
     <span class="bnav-label">查詢</span>
   </button>
+  <!-- 回到頂部 -->
   <button class="bnav-item" id="bnavTop">
-    <span class="bnav-icon-up">↑</span>
+    <svg class="bnav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"/>
+    </svg>
   </button>
 </nav>
 
