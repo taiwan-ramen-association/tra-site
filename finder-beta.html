@@ -686,22 +686,24 @@
   .empty-state .big { font-size: 38px; margin-bottom: 10px; }
   .empty-state p { font-size: 14px; }
 
-  /* ── PAGES OUTER（左右滑動容器）── */
-  html { overflow-x: hidden; }
-  .pages-outer {
-    display: flex; flex-direction: row;
-    width: 200vw;
-    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-  }
-  .pages-outer.at-reviews { transform: translateX(-50%); }
-  #mainContent { flex-shrink: 0; width: 100vw; display: none; }
+  /* ── PAGE SWITCHING ── */
+  #mainContent { display: none; }
   #mainContent.mc-show { display: block; }
   #pageReviews {
-    flex-shrink: 0; width: 100vw;
+    position: fixed;
+    top: var(--header-h, 56px); left: 0; right: 0; bottom: 52px;
     overflow-y: auto;
-    height: calc(100vh - var(--header-h, 56px) - 52px);
-    padding: 14px 12px 80px; box-sizing: border-box;
+    background: var(--bg);
+    z-index: 800;
+    padding: 14px 12px 20px; box-sizing: border-box;
+    opacity: 0; visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.22s ease, transform 0.22s ease,
+                visibility 0s linear 0.22s;
+  }
+  #pageReviews.visible {
+    opacity: 1; visibility: visible; transform: translateY(0);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s;
   }
 
   /* ── REVIEWS FEED ── */
@@ -817,13 +819,9 @@
       grid-row: 2;
     }
 
-    /* Reviews feed on desktop */
-    #pageReviews {
-      height: calc(100vh - var(--header-h, 56px) - 40px);
-      padding: 20px 24px 60px;
-    }
     .rf-list-inner { max-width: 680px; margin: 0 auto; }
     .rf-feed-title { font-size: 19px; }
+    #pageReviews { padding: 20px 24px 60px; bottom: 40px; }
   }
 
   /* ── LOCATE ── */
@@ -1456,7 +1454,6 @@
   <button class="retry-btn" id="retryBtn">重新載入</button>
 </div>
 
-<div class="pages-outer" id="pagesOuter">
 <div id="mainContent">
   <div class="filter-bar">
     <div class="search-box">
@@ -1505,8 +1502,6 @@
   <div class="rf-feed-title">📝 評論合集</div>
   <div class="rf-list-inner" id="rfList"></div>
 </div>
-
-</div><!-- end .pages-outer -->
 
 <!-- Bottom Navigation Bar -->
 <nav class="bottom-nav" id="bottomNav">
@@ -3809,8 +3804,8 @@ async function loadReviews(shopId, panel, append = false) {
 
     // 重繪 header（count + 寫評論 btn）
     if (!append) {
-      const totalSnap = await db.collection('reviews').where('shopId', '==', shopId).count().get();
-      const total = totalSnap.data().count;
+      const totalSnap = await db.collection('reviews').where('shopId', '==', shopId).get();
+      const total = totalSnap.size;
       const headerRow = document.createElement('div');
       headerRow.className = 'review-header-row';
       const canWrite = canView('reviews') && canUse('reviews') && auth.currentUser;
@@ -4188,18 +4183,17 @@ async function loadReviewsFeed(append = false) {
 
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
 function switchPage(page) {
-  const outer = document.getElementById('pagesOuter');
   _currentPage = page;
+  const reviewsEl = document.getElementById('pageReviews');
   if (page === 'finder') {
-    outer.classList.remove('at-reviews');
+    reviewsEl.classList.remove('visible');
     document.getElementById('bnavFinder').classList.add('active');
     document.getElementById('bnavPosts').classList.remove('active');
   } else {
-    outer.classList.add('at-reviews');
+    reviewsEl.classList.add('visible');
     document.getElementById('bnavFinder').classList.remove('active');
     document.getElementById('bnavPosts').classList.add('active');
     if (!_rfLoaded) loadReviewsFeed();
-    else markFeedPageSeen();
     markFeedPageSeen();
   }
 }
