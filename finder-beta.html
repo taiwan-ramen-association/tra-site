@@ -3762,7 +3762,7 @@ let _rvCursors  = {};       // shopId → lastDoc for pagination
 const storage   = firebase.storage();
 
 // ── 圖片壓縮（Canvas，不需外部套件）──────────────────────────────────────────
-function compressImage(file, { maxPx = 1200, maxKB = 200 } = {}) {
+function compressImage(file, { maxPx = 1200, maxKB = 400 } = {}) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -3777,11 +3777,12 @@ function compressImage(file, { maxPx = 1200, maxKB = 200 } = {}) {
       const canvas = document.createElement('canvas');
       canvas.width = width; canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      let q = 0.85;
+      // 步進 0.15 加快收斂（最多 4 次）
+      let q = 0.82;
       const tryBlob = () => {
         canvas.toBlob(blob => {
           if (!blob) { reject(new Error('compress failed')); return; }
-          if (blob.size > maxKB * 1024 && q > 0.3) { q -= 0.1; tryBlob(); return; }
+          if (blob.size > maxKB * 1024 && q > 0.28) { q = Math.max(0.28, q - 0.15); tryBlob(); return; }
           resolve(new File([blob], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' }));
         }, 'image/webp', q);
       };
@@ -3791,17 +3792,26 @@ function compressImage(file, { maxPx = 1200, maxKB = 200 } = {}) {
     img.src = url;
   });
 }
-const makeThumb    = f => compressImage(f, { maxPx: 400,  maxKB: 40  });
-const makeOriginal = f => compressImage(f, { maxPx: 1200, maxKB: 200 });
+// thumb 從縮圖 canvas 生成，orig 較寬鬆以減少迭代
+const makeThumb    = f => compressImage(f, { maxPx: 400,  maxKB: 60  });
+const makeOriginal = f => compressImage(f, { maxPx: 1200, maxKB: 400 });
 
 // ── Storage 上傳單張 ─────────────────────────────────────────────────────────
-async function uploadReviewPhoto(file, shopId, reviewId, idx) {
+async function uploadReviewPhoto(file, shopId, reviewId, idx, onUploadStart) {
+  const t0 = performance.now();
   const [orig, thumb] = await Promise.all([makeOriginal(file), makeThumb(file)]);
+  const t1 = performance.now();
+  console.log(`[photo ${idx}] 壓縮: ${(t1-t0).toFixed(0)}ms | orig ${(orig.size/1024).toFixed(0)}KB thumb ${(thumb.size/1024).toFixed(0)}KB`);
+
+  onUploadStart?.();
   const base = `reviews/${shopId}/${reviewId}/photo_${idx}`;
   const [os, ts] = await Promise.all([
     storage.ref(`${base}_orig.webp`).put(orig,  { contentType: 'image/webp' }),
     storage.ref(`${base}_thumb.webp`).put(thumb, { contentType: 'image/webp' }),
   ]);
+  const t2 = performance.now();
+  console.log(`[photo ${idx}] 上傳: ${(t2-t1).toFixed(0)}ms`);
+
   const [origUrl, thumbUrl] = await Promise.all([os.ref.getDownloadURL(), ts.ref.getDownloadURL()]);
   return { original: origUrl, thumb: thumbUrl };
 }
@@ -4045,10 +4055,10 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
     let photos = [];
 
     if (_rvFiles.length) {
-      progress.textContent = `上傳照片中 0 / ${_rvFiles.length}…`;
       for (let i = 0; i < _rvFiles.length; i++) {
-        progress.textContent = `上傳照片中 ${i + 1} / ${_rvFiles.length}…`;
-        const p = await uploadReviewPhoto(_rvFiles[i].file, _rvShopId, reviewId, i);
+        progress.textContent = `壓縮照片 ${i + 1} / ${_rvFiles.length}…`;
+        const p = await uploadReviewPhoto(_rvFiles[i].file, _rvShopId, reviewId, i,
+          () => { progress.textContent = `上傳照片 ${i + 1} / ${_rvFiles.length}…`; });
         photos.push(p);
       }
     }
