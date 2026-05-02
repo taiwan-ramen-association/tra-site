@@ -2627,21 +2627,22 @@ let _googlePhotoURL = '';   // 保存 Google 原始頭像
 let _pendingAvatar  = null; // 暫存尚未儲存的頭像選擇（null = 未修改）
 let _localAvatarUid = null; // 登入使用者 uid，供 localStorage key 使用
 
-function localAvatarKey(uid) { return 'localAvatar_' + uid; }
+function localAvatarKey(uid) { return 'avatarCache_' + uid; }
 
 function getAvatarUrl(userData, googlePhotoURL) {
   return userData?.avatarUrl || googlePhotoURL || 'assets/icons/03.png';
 }
 
-// 套用本機頭像（如果有的話），覆蓋 Firestore / Google 頭像
-function applyLocalAvatar(uid) {
-  const data = uid && localStorage.getItem(localAvatarKey(uid));
-  if (data) {
-    userAvatar.src     = data;
-    pdHeaderAvatar.src = data;
-    pdAvatarPreview.src = data;
-    return true;
-  }
+// 套用頭像到所有 UI（優先用 localStorage URL cache 避免閃爍）
+function applyAvatarUrl(url) {
+  if (!url) return;
+  userAvatar.src      = url;
+  pdHeaderAvatar.src  = url;
+  pdAvatarPreview.src = url;
+}
+function applyLocalAvatarCache(uid) {
+  const cached = uid && localStorage.getItem(localAvatarKey(uid));
+  if (cached) { applyAvatarUrl(cached); return true; }
   return false;
 }
 
@@ -2683,43 +2684,46 @@ rollAvatarBtn.addEventListener('click', () => {
   pdAvatarPreview.src = _pendingAvatar;
 });
 
-// ↩ 還原 Google 預設（同時清除本機上傳頭像）
-resetAvatarBtn.addEventListener('click', () => {
+// ↩ 還原 Google 預設（清除 Storage 頭像 + Firestore avatarUrl）
+resetAvatarBtn.addEventListener('click', async () => {
   _pendingAvatar = _googlePhotoURL || '';
   pdAvatarPreview.src = _pendingAvatar || 'assets/icons/03.png';
-  if (_localAvatarUid) localStorage.removeItem(localAvatarKey(_localAvatarUid));
+  if (_localAvatarUid) {
+    localStorage.removeItem(localAvatarKey(_localAvatarUid));
+    try {
+      await db.collection('users').doc(_localAvatarUid).update({ avatarUrl: firebase.firestore.FieldValue.delete() });
+      storage.ref(`avatars/${_localAvatarUid}.webp`).delete().catch(() => {});
+    } catch {}
+  }
 });
 
-// 📷 上傳本機照片（僅存 localStorage，不上傳 Firebase）
+// 📷 上傳照片 → Storage `avatars/{uid}.webp` → Firestore avatarUrl → localStorage cache
 uploadAvatarBtn.addEventListener('click', () => localAvatarInput.click());
 localAvatarInput.addEventListener('change', async () => {
   const file = localAvatarInput.files[0];
-  if (!file) return;
+  if (!file || !auth.currentUser) return;
   localAvatarInput.value = '';
   uploadAvatarBtn.textContent = '壓縮中…';
   uploadAvatarBtn.disabled = true;
   try {
-    const blob = await compressImage(file, { maxPx: 400, maxKB: 80 });
-    await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const dataUrl = e.target.result;
-        if (_localAvatarUid) {
-          localStorage.removeItem(localAvatarKey(_localAvatarUid)); // 清除舊快取
-          localStorage.setItem(localAvatarKey(_localAvatarUid), dataUrl);
-        }
-        // 立即套用，不經儲存按鈕
-        userAvatar.src      = dataUrl;
-        pdHeaderAvatar.src  = dataUrl;
-        pdAvatarPreview.src = dataUrl;
-        _pendingAvatar = null; // 本機照片不走 Firestore 儲存流程
-        resolve();
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    const uid = auth.currentUser.uid;
+    // 1. 壓縮
+    const blob = await compressImage(file, { maxPx: 400, maxKB: 100 });
+    uploadAvatarBtn.textContent = '上傳中…';
+    // 2. 上傳 Storage（覆蓋同路徑，自動取代舊頭像）
+    const snap = await storage.ref(`avatars/${uid}.webp`).put(blob, { contentType: 'image/webp' });
+    const url  = await snap.ref.getDownloadURL();
+    // 3. 存 Firestore
+    await db.collection('users').doc(uid).update({ avatarUrl: url });
+    // 4. 更新 UI
+    applyAvatarUrl(url);
+    _pendingAvatar = null;
+    // 5. localStorage URL cache（下次登入快速顯示）
+    try { localStorage.setItem(localAvatarKey(uid), url); } catch {}
+    showStampToast('✅ 頭像已更新！');
   } catch (err) {
-    console.error('頭像壓縮失敗', err);
+    console.error('頭像上傳失敗', err);
+    showStampToast('❌ 頭像上傳失敗');
   }
   uploadAvatarBtn.textContent = '📷 上傳照片';
   uploadAvatarBtn.disabled = false;
@@ -3678,13 +3682,11 @@ auth.onAuthStateChanged(async user => {
 
       document.getElementById('betaGate').style.display = 'none';
 
-      // 頭像：優先用本機上傳（localStorage），其次 Firestore avatarUrl，最後 Google 照片
+      // 頭像：Firestore avatarUrl > Google photoURL，localStorage 只做 URL 快取加速
       _localAvatarUid = user.uid;
       const avatar = getAvatarUrl(userData, user.photoURL);
-      userAvatar.src       = avatar;
-      pdHeaderAvatar.src   = avatar;
-      pdAvatarPreview.src  = avatar;
-      applyLocalAvatar(user.uid); // 若有本機頭像則覆蓋
+      applyAvatarUrl(avatar);
+      applyLocalAvatarCache(user.uid); // 若有快取 URL 先顯示（避免閃爍）
       pdDisplayName.textContent = userData.nickname || user.displayName || '';
       pdEmail.textContent       = user.email || '';
       nicknameInput.value       = userData.nickname || '';
@@ -4065,14 +4067,13 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
 
     progress.textContent = '送出評論…';
     const u = auth.currentUser;
-    // 頭像：優先用本機上傳
-    const localAv = _localAvatarUid && localStorage.getItem(localAvatarKey(_localAvatarUid));
+    // 頭像：直接用目前顯示的頭像 URL（已是 Storage URL 或 DiceBear 或 Google）
     await db.collection('reviews').doc(reviewId).set({
       shopId:      _rvShopId,
       shopName:    _rvShopName,
       uid:         u.uid,
       displayName: u.displayName || '匿名',
-      avatarUrl:   localAv || u.photoURL || '',
+      avatarUrl:   userAvatar.src || u.photoURL || '',
       rating:      _rvRating,
       text,
       photos,
