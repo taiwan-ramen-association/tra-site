@@ -961,11 +961,10 @@
   }
   #pdDisplayName:hover { color: var(--red); }
   .pd-nick-field {
-    display: block; width: 100%; margin-top: 4px;
+    display: block; width: 100%; margin-bottom: 8px;
     padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px;
     font-size: 11px; color: var(--stone); background: transparent;
-    cursor: default; outline: none; pointer-events: none;
-    box-sizing: border-box; font-family: inherit;
+    box-sizing: border-box; font-family: inherit; min-height: 26px;
   }
   /* Nickname edit popup */
   .pd-nick-popup {
@@ -1318,6 +1317,12 @@
     .pv-arrow { display: none; }
     .pv-body { padding: 0 12px; }
   }
+  @keyframes pvSlideInRight { from { opacity:0; transform:translateX(36px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes pvSlideInLeft  { from { opacity:0; transform:translateX(-36px); } to { opacity:1; transform:translateX(0); } }
+  #pvImg.pv-enter-right { animation: pvSlideInRight 0.22s ease; }
+  #pvImg.pv-enter-left  { animation: pvSlideInLeft  0.22s ease; }
+  .rv-date-input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--paper); color: var(--ink); outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+  .rv-date-input:focus { border-color: var(--red); }
 </style>
 </head>
 <body>
@@ -1353,6 +1358,7 @@
 
   <!-- 自定義顯示身份 -->
   <div class="pd-customize">
+    <label class="pd-nick-field" id="pdNickField"></label>
     <div class="pd-customize-row">
       <div class="pd-avatar-wrap" id="pdAvatarWrap">
         <img class="pd-header-avatar" id="pdHeaderAvatar" src="">
@@ -1361,7 +1367,6 @@
       </div>
       <div class="pd-customize-info">
         <button id="pdDisplayName"></button>
-        <input class="pd-nick-field" id="pdNickField" type="text" readonly placeholder="自定義顯示身份">
       </div>
     </div>
     <div class="pd-nick-popup" id="pdNickPopup" style="display:none">
@@ -1623,6 +1628,10 @@
       <div>
         <span class="rv-label">評論內容</span>
         <textarea class="rv-textarea" id="rvText" placeholder="分享你的用餐體驗（選填，最多 1000 字）" maxlength="1000"></textarea>
+      </div>
+      <div>
+        <span class="rv-label">拍攝日期 <span style="color:var(--red)">*</span></span>
+        <input type="date" class="rv-date-input" id="rvPhotoDate" required>
       </div>
       <div>
         <span class="rv-label">照片（最多 5 張）</span>
@@ -2829,7 +2838,7 @@ pdDisplayName.addEventListener('click', e => {
   const isOpen = popup.style.display !== 'none';
   popup.style.display = isOpen ? 'none' : 'block';
   if (!isOpen) {
-    nicknameInput.value = document.getElementById('pdNickField').value;
+    nicknameInput.value = document.getElementById('pdNickField').textContent;
     nicknameInput.focus();
   }
 });
@@ -2848,7 +2857,7 @@ saveProfileBtn.addEventListener('click', async () => {
     const nickname = nicknameInput.value.trim();
     await db.collection('users').doc(user.uid).update({ nickname });
     pdDisplayName.textContent = nickname || user.displayName || '';
-    document.getElementById('pdNickField').value = nickname;
+    document.getElementById('pdNickField').textContent = nickname;
     document.getElementById('pdNickPopup').style.display = 'none';
     showStampToast('✅ 已儲存！');
   } catch (e) {
@@ -3802,7 +3811,7 @@ auth.onAuthStateChanged(async user => {
       pdEmail.value = user.email || '';
       // 自定義顯示身份區
       pdDisplayName.textContent                            = userData.nickname || user.displayName || '';
-      document.getElementById('pdNickField').value        = userData.nickname || '';
+      document.getElementById('pdNickField').textContent        = userData.nickname || '';
       nicknameInput.value                                  = userData.nickname || '';
       adminLink.style.display   = userData.role === 'admin' ? 'flex' : 'none';
       isWarned = userData.role === 'warned';
@@ -4019,7 +4028,7 @@ async function loadReviews(shopId, panel, append = false) {
           </div>
         </div>
         ${d.text ? `<div class="review-text">${d.text.replace(/</g,'&lt;')}</div>` : ''}
-        ${d.photos?.length ? `<div class="review-photos">${photosHtml}</div>` : ''}`;
+        ${d.photos?.length ? `<div class="review-photos" data-photo-date="${d.photoDate || ''}">${photosHtml}</div>` : ''}`;
       list.appendChild(item);
     });
     panel.appendChild(list);
@@ -4043,14 +4052,14 @@ async function loadReviews(shopId, panel, append = false) {
 
     // 照片瀏覽
     list.querySelectorAll('.review-photos').forEach(row => {
-      const thumbs = [...row.querySelectorAll('.review-photo-thumb')];
-      const urls   = thumbs.map(i => i.dataset.original);
-      const item   = row.closest('.review-item');
-      const uid    = item?.querySelector('.review-name')?.dataset.uid || '';
-      const date   = item?.querySelector('.review-date')?.textContent  || '';
-      const name   = item?.querySelector('.review-name')?.textContent  || '';
+      const thumbs    = [...row.querySelectorAll('.review-photo-thumb')];
+      const urls      = thumbs.map(i => i.dataset.original);
+      const item      = row.closest('.review-item');
+      const uid       = item?.querySelector('.review-name')?.dataset.uid || '';
+      const photoDate = row.dataset.photoDate || '';
+      const name      = item?.querySelector('.review-name')?.textContent  || '';
       thumbs.forEach((img, idx) => {
-        img.addEventListener('click', () => openPhotoViewer(urls, idx, { date, uid, authorName: name }));
+        img.addEventListener('click', () => openPhotoViewer(urls, idx, { date: photoDate, uid, authorName: name }));
       });
     });
     updateDisplayNames(list);
@@ -4118,14 +4127,21 @@ function closePhotoViewer() {
   document.getElementById('photoViewer').classList.remove('open');
   document.getElementById('pvImg').src = '';
 }
-function _renderPV() {
+function _renderPV(dir) {
   const single = _pvUrls.length <= 1;
-  document.getElementById('pvImg').src = _pvUrls[_pvIdx];
+  const img = document.getElementById('pvImg');
+  img.classList.remove('pv-enter-right', 'pv-enter-left');
+  if (dir) {
+    void img.offsetWidth;
+    img.classList.add(dir === 1 ? 'pv-enter-right' : 'pv-enter-left');
+  }
+  img.src = _pvUrls[_pvIdx];
   document.getElementById('pvCounter').textContent       = `${_pvIdx + 1} / ${_pvUrls.length}`;
   document.getElementById('pvCounter').style.visibility  = single ? 'hidden' : '';
   document.getElementById('pvPrev').style.display        = single ? 'none' : '';
   document.getElementById('pvNext').style.display        = single ? 'none' : '';
-  document.getElementById('pvFooterDate').textContent    = _pvMeta.date   || '';
+  const dateEl = document.getElementById('pvFooterDate');
+  dateEl.textContent = _pvMeta.date ? `拍攝日期 ${_pvMeta.date}` : '';
   document.getElementById('pvFooterAuthor').textContent  = _pvMeta.authorName ? `by ${_pvMeta.authorName}` : '';
   if (_pvMeta.uid) {
     getUserDisplay(_pvMeta.uid).then(u => {
@@ -4133,12 +4149,14 @@ function _renderPV() {
     });
   }
 }
-function _pvPrev() { _pvIdx = (_pvIdx - 1 + _pvUrls.length) % _pvUrls.length; _renderPV(); }
-function _pvNext() { _pvIdx = (_pvIdx + 1) % _pvUrls.length; _renderPV(); }
+function _pvGo(delta) {
+  _pvIdx = (_pvIdx + delta + _pvUrls.length) % _pvUrls.length;
+  _renderPV(delta);
+}
 
 document.getElementById('pvClose').addEventListener('click', closePhotoViewer);
-document.getElementById('pvPrev').addEventListener('click', _pvPrev);
-document.getElementById('pvNext').addEventListener('click', _pvNext);
+document.getElementById('pvPrev').addEventListener('click', () => _pvGo(-1));
+document.getElementById('pvNext').addEventListener('click', () => _pvGo(1));
 
 let _pvTouchX = 0;
 document.getElementById('photoViewer').addEventListener('touchstart', e => {
@@ -4146,13 +4164,13 @@ document.getElementById('photoViewer').addEventListener('touchstart', e => {
 }, { passive: true });
 document.getElementById('photoViewer').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - _pvTouchX;
-  if (Math.abs(dx) > 40) dx < 0 ? _pvNext() : _pvPrev();
+  if (Math.abs(dx) > 40) _pvGo(dx < 0 ? 1 : -1);
 }, { passive: true });
 
 document.addEventListener('keydown', e => {
   if (!document.getElementById('photoViewer').classList.contains('open')) return;
-  if      (e.key === 'ArrowLeft')  _pvPrev();
-  else if (e.key === 'ArrowRight') _pvNext();
+  if      (e.key === 'ArrowLeft')  _pvGo(-1);
+  else if (e.key === 'ArrowRight') _pvGo(1);
   else if (e.key === 'Escape')     closePhotoViewer();
 });
 
@@ -4166,6 +4184,7 @@ function openReviewModal(shopId, shopName) {
   _rvFiles    = [];
   document.getElementById('rvTitle').textContent = `✍ 寫評論 — ${shopName}`;
   document.getElementById('rvText').value = '';
+  document.getElementById('rvPhotoDate').value = '';
   document.getElementById('rvPreviewGrid').innerHTML = '';
   document.getElementById('rvProgress').textContent = '';
   document.getElementById('rvSubmitBtn').disabled = true;
@@ -4204,9 +4223,11 @@ document.querySelectorAll('.star-btn').forEach(b => {
 
 function checkRvSubmitReady() {
   const hasContent = _rvRating > 0 || document.getElementById('rvText').value.trim().length > 0;
-  document.getElementById('rvSubmitBtn').disabled = !hasContent;
+  const hasDate    = !!document.getElementById('rvPhotoDate').value;
+  document.getElementById('rvSubmitBtn').disabled = !(hasContent && hasDate);
 }
 document.getElementById('rvText').addEventListener('input', checkRvSubmitReady);
+document.getElementById('rvPhotoDate').addEventListener('change', checkRvSubmitReady);
 
 // 圖片上傳區域
 function addRvFiles(newFiles) {
@@ -4276,6 +4297,7 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
       rating:      _rvRating,
       text,
       photos,
+      photoDate:   document.getElementById('rvPhotoDate').value,
       createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -4379,7 +4401,7 @@ async function loadReviewsFeed(append = false) {
         ? ts.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })
         : '';
       const stars = '★'.repeat(d.rating || 0) + '☆'.repeat(5 - (d.rating || 0));
-      const photosHtml = (d.photos || []).slice(0, 3).map(p =>
+      const photosHtml = (d.photos || []).slice(0, 5).map(p =>
         `<img class="rf-thumb" src="${p.thumb}" data-original="${p.original}" alt="" loading="lazy">`
       ).join('');
 
@@ -4401,16 +4423,16 @@ async function loadReviewsFeed(append = false) {
           </div>
         </div>
         ${d.text ? `<div class="rf-text">${d.text}</div>` : ''}
-        ${photosHtml ? `<div class="rf-photos">${photosHtml}</div>` : ''}
+        ${photosHtml ? `<div class="rf-photos" data-photo-date="${d.photoDate || ''}">${photosHtml}</div>` : ''}
         <span class="rf-unread-dot"></span>`;
 
-      const rfThumbs = [...card.querySelectorAll('.rf-thumb')];
-      const rfUrls   = rfThumbs.map(i => i.dataset.original);
-      const rfUid    = d.uid || '';
-      const rfDate   = dateStr;
-      const rfName   = d.displayName || '匿名';
+      const rfThumbs    = [...card.querySelectorAll('.rf-thumb')];
+      const rfUrls      = rfThumbs.map(i => i.dataset.original);
+      const rfUid       = d.uid || '';
+      const rfPhotoDate = d.photoDate || '';
+      const rfName      = d.displayName || '匿名';
       rfThumbs.forEach((img, idx) => {
-        img.addEventListener('click', () => openPhotoViewer(rfUrls, idx, { date: rfDate, uid: rfUid, authorName: rfName }));
+        img.addEventListener('click', () => openPhotoViewer(rfUrls, idx, { date: rfPhotoDate, uid: rfUid, authorName: rfName }));
       });
       list.appendChild(card);
     });
