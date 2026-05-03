@@ -713,6 +713,13 @@
   #mainContent.scroll-locked { overflow-y: hidden; }
   /* 貼文頁 active 時蓋過 body-level modals (z-600/601) */
   #pageReviews.page-active { z-index: 650; }
+  /* 切到貼文頁時，finder modals 保留狀態但不攔截點擊 */
+  body.finder-hidden .stamp-backdrop,
+  body.finder-hidden .stamp-modal,
+  body.finder-hidden .queue-backdrop,
+  body.finder-hidden .queue-modal,
+  body.finder-hidden .rv-backdrop,
+  body.finder-hidden .rv-modal { pointer-events: none; }
   /* Departing page: shrinks & fades to the left */
   .page-layer.page-left {
     transform: translateX(-22%) scale(0.96);
@@ -4289,6 +4296,7 @@ function switchPage(page) {
   const reviewsEl = document.getElementById('pageReviews');
 
   if (page === 'finder') {
+    document.body.classList.remove('finder-hidden');
     finderEl.classList.remove('page-left', 'page-right');
     finderEl.classList.add('page-active');
     reviewsEl.classList.remove('page-active', 'page-left');
@@ -4296,6 +4304,7 @@ function switchPage(page) {
     document.getElementById('bnavFinder').classList.add('active');
     document.getElementById('bnavPosts').classList.remove('active');
   } else {
+    document.body.classList.add('finder-hidden');
     reviewsEl.classList.remove('page-left', 'page-right');
     reviewsEl.classList.add('page-active');
     finderEl.classList.remove('page-active', 'page-right');
