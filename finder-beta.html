@@ -415,6 +415,31 @@
   .photo-grid img.loading { opacity: 0; }
   .photo-grid img.loaded  { opacity: 1; }
   .photo-attribution { font-size: 10px; color: var(--stone); text-align: right; padding: 2px 0 6px; }
+  /* ── MENU TAB ── */
+  .mnu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px 0 4px; }
+  .mnu-grid a { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: var(--line); position: relative; }
+  .mnu-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mnu-date-badge { position: absolute; bottom: 3px; left: 3px; font-size: 9px; background: rgba(0,0,0,0.55); color: #fff; padding: 1px 4px; border-radius: 3px; pointer-events: none; }
+  .mnu-upload-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px; margin-bottom: 8px; background: var(--paper); border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; color: var(--stone); cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
+  .mnu-upload-btn:hover { border-color: var(--red); color: var(--red); }
+  .mnu-load-more { display: block; width: 100%; padding: 7px; background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--stone); font-size: 12px; cursor: pointer; font-family: inherit; margin-top: 6px; }
+  /* Menu modal */
+  #mnuBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 800; display: none; }
+  #mnuBackdrop.open { display: block; }
+  #mnuModal { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-radius: 18px 18px 0 0; padding: 20px 18px 32px; z-index: 801; display: none; max-height: 85vh; overflow-y: auto; }
+  #mnuModal.open { display: block; }
+  #mnuModal h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .mnu-field-label { font-size: 12px; color: var(--stone); margin-bottom: 4px; }
+  .mnu-date-input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--paper); color: var(--text); box-sizing: border-box; margin-bottom: 12px; }
+  .mnu-photo-area { border: 2px dashed var(--line); border-radius: 10px; min-height: 90px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 12px; overflow: hidden; position: relative; }
+  .mnu-photo-area img { width: 100%; max-height: 220px; object-fit: contain; }
+  .mnu-photo-placeholder { color: var(--stone); font-size: 13px; text-align: center; padding: 16px; }
+  .mnu-photo-remove { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .mnu-submit-btn { width: 100%; padding: 12px; background: var(--red); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .mnu-submit-btn:disabled { opacity: 0.55; cursor: default; }
+  .mnu-cancel-btn { width: 100%; padding: 10px; background: none; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; color: var(--stone); }
+  body.dark #mnuModal { background: #1e1a16; }
+  body.dark .mnu-date-input { background: #252220; border-color: #3a3330; }
 
   .tab-placeholder {
     text-align: center; padding: 22px 0 10px;
@@ -1687,6 +1712,22 @@
   </div>
 </div>
 
+<!-- Menu Upload Modal -->
+<div id="mnuBackdrop"></div>
+<div id="mnuModal">
+  <h3 id="mnuTitle">📷 上傳菜單</h3>
+  <div class="mnu-field-label">拍攝日期 <span style="color:var(--red)">*</span></div>
+  <input type="date" class="mnu-date-input" id="mnuDate">
+  <div class="mnu-field-label">照片（限 1 張）<span style="color:var(--red)">*</span></div>
+  <div class="mnu-photo-area" id="mnuPhotoArea">
+    <div class="mnu-photo-placeholder">點此選擇照片</div>
+    <input type="file" id="mnuFileInput" accept="image/*" style="display:none">
+  </div>
+  <div id="mnuProgress" style="font-size:12px;color:var(--stone);margin-bottom:8px;min-height:16px"></div>
+  <button class="mnu-submit-btn" id="mnuSubmitBtn" disabled>上傳</button>
+  <button class="mnu-cancel-btn" id="mnuCancelBtn">取消</button>
+</div>
+
 <!-- Bottom Navigation Bar -->
 <nav class="bottom-nav" id="bottomNav">
   <!-- 搜尋器 -->
@@ -2306,9 +2347,9 @@ function renderCard(shop) {
     <div class="card-detail">
       <div class="card-tabs">
         <button class="card-tab active" data-tab-target="info">資訊</button>
-        <button class="card-tab" data-tab-target="menu">菜單</button>
-        <button class="card-tab" data-tab-target="photos">照片</button>
-        <button class="card-tab" data-tab-target="reviews">評論</button>
+        ${canView('menuTab')   ? `<button class="card-tab" data-tab-target="menu">菜單</button>`   : ''}
+        ${canView('photosTab') ? `<button class="card-tab" data-tab-target="photos">照片</button>` : ''}
+        ${canView('reviews')   ? `<button class="card-tab" data-tab-target="reviews">評論</button>` : ''}
       </div>
       <div class="card-tab-panel active" data-tab-panel="info">
         ${mapBtn}
@@ -2322,7 +2363,7 @@ function renderCard(shop) {
         </div>` : ''}
       </div>
       <div class="card-tab-panel" data-tab-panel="menu">
-        <p class="tab-placeholder">🍜 菜單功能<br>即將上線</p>
+        ${canView('menuTab') ? `<div class="menu-tab-inner"></div>` : `<p class="tab-placeholder">🍜 菜單功能<br>暫不開放</p>`}
       </div>
       <div class="card-tab-panel" data-tab-panel="photos">
         <p class="tab-placeholder">📷 照片功能<br>即將上線</p>
@@ -2375,6 +2416,16 @@ function render() {
         if (target === 'info') {
           const shopId = card.dataset.shopId;
           if (shopId) refreshQueueSection(shopId);
+        }
+        // 切到菜單時 lazy load
+        if (target === 'menu' && canView('menuTab')) {
+          const shopId   = card.dataset.shopId;
+          const shop     = ALL_DATA.find(s => s['ID'] === shopId);
+          const menuPanel = detail.querySelector('[data-tab-panel="menu"] .menu-tab-inner');
+          if (shop && menuPanel && !menuPanel.dataset.loaded) {
+            menuPanel.dataset.loaded = '1';
+            loadShopMenu(shop, menuPanel);
+          }
         }
         // 切到照片時 lazy load
         if (target === 'photos') {
@@ -2988,6 +3039,163 @@ function showStampToast(msg) {
   t._t = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+// ── Menu Tab ────────────────────────────────────────────────────────────────
+const menuCache = {}; // shopId → { docs: [], lastDoc, hasMore }
+
+async function loadShopMenu(shop, panel, append = false) {
+  const shopId = shop['ID'];
+  if (!append) {
+    panel.innerHTML = '';
+    // 上傳按鈕
+    if (canUse('menuTab')) {
+      const uploadBtn = document.createElement('button');
+      uploadBtn.className = 'mnu-upload-btn';
+      uploadBtn.innerHTML = '📷 上傳菜單照片';
+      uploadBtn.addEventListener('click', () => openMenuModal(shopId, shop['店名'] || ''));
+      panel.appendChild(uploadBtn);
+    }
+  }
+
+  const loading = document.createElement('p');
+  loading.className = 'tab-placeholder';
+  loading.style.padding = '10px 0';
+  loading.textContent = '載入中…';
+  panel.appendChild(loading);
+
+  try {
+    const cache = menuCache[shopId] || { lastDoc: null };
+    let q = db.collection('menus')
+      .where('shopId', '==', shopId)
+      .orderBy('photoDate', 'desc')
+      .limit(3);
+    if (append && cache.lastDoc) q = q.startAfter(cache.lastDoc);
+
+    const snap = await q.get();
+    loading.remove();
+    const docs = snap.docs;
+    const hasMore = docs.length >= 3;
+    menuCache[shopId] = { lastDoc: docs.length ? docs[docs.length - 1] : cache.lastDoc, hasMore };
+
+    if (!docs.length && !append) {
+      panel.insertAdjacentHTML('beforeend', '<p class="tab-placeholder" style="padding:8px 0">尚無菜單照片</p>');
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'mnu-grid';
+    docs.forEach(doc => {
+      const d = doc.data();
+      const a = document.createElement('a');
+      a.href = d.photo?.original || d.photo?.thumb || '#';
+      a.target = '_blank'; a.rel = 'noopener';
+      a.innerHTML = `<img src="${d.photo?.thumb || d.photo?.original}" alt="菜單" loading="lazy">
+        ${d.photoDate ? `<span class="mnu-date-badge">${d.photoDate}</span>` : ''}`;
+      grid.appendChild(a);
+    });
+    panel.appendChild(grid);
+
+    if (hasMore) {
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'mnu-load-more';
+      moreBtn.textContent = '顯示更多…';
+      moreBtn.addEventListener('click', () => { moreBtn.remove(); loadShopMenu(shop, panel, true); });
+      panel.appendChild(moreBtn);
+    }
+  } catch(e) {
+    loading.textContent = '載入失敗，請稍後再試';
+  }
+}
+
+// ── Menu Modal ───────────────────────────────────────────────────────────────
+let _mnuShopId = '', _mnuShopName = '', _mnuFile = null;
+
+function openMenuModal(shopId, shopName) {
+  _mnuShopId = shopId; _mnuShopName = shopName;
+  _mnuFile = null;
+  document.getElementById('mnuTitle').textContent = `📷 上傳菜單 — ${shopName}`;
+  document.getElementById('mnuDate').value = '';
+  document.getElementById('mnuProgress').textContent = '';
+  document.getElementById('mnuSubmitBtn').disabled = true;
+  const area = document.getElementById('mnuPhotoArea');
+  area.innerHTML = `<div class="mnu-photo-placeholder">點此選擇照片</div>
+    <input type="file" id="mnuFileInput" accept="image/*" style="display:none">`;
+  area.querySelector('#mnuFileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    _mnuFile = file;
+    const url = URL.createObjectURL(file);
+    area.innerHTML = `<img src="${url}" alt="">
+      <button class="mnu-photo-remove" id="mnuPhotoRemove">✕</button>`;
+    area.querySelector('#mnuPhotoRemove').addEventListener('click', e => {
+      e.stopPropagation(); e.preventDefault();
+      _mnuFile = null;
+      area.innerHTML = `<div class="mnu-photo-placeholder">點此選擇照片</div>
+        <input type="file" id="mnuFileInput" accept="image/*" style="display:none">`;
+      area.querySelector('#mnuFileInput').addEventListener('change', arguments.callee);
+      checkMnuReady();
+    });
+    checkMnuReady();
+  });
+  area.addEventListener('click', () => area.querySelector('#mnuFileInput')?.click());
+  document.getElementById('mnuBackdrop').classList.add('open');
+  document.getElementById('mnuModal').classList.add('open');
+}
+
+function checkMnuReady() {
+  const hasDate  = !!document.getElementById('mnuDate')?.value;
+  const hasPhoto = !!_mnuFile;
+  document.getElementById('mnuSubmitBtn').disabled = !(hasDate && hasPhoto);
+}
+
+document.getElementById('mnuDate')?.addEventListener('input', checkMnuReady);
+
+function closeMenuModal() {
+  document.getElementById('mnuBackdrop').classList.remove('open');
+  document.getElementById('mnuModal').classList.remove('open');
+}
+document.getElementById('mnuCancelBtn').addEventListener('click', closeMenuModal);
+document.getElementById('mnuBackdrop').addEventListener('click', closeMenuModal);
+
+document.getElementById('mnuSubmitBtn').addEventListener('click', async () => {
+  if (!_mnuFile || !_mnuShopId || !auth.currentUser) return;
+  const photoDate = document.getElementById('mnuDate').value;
+  if (!photoDate) return;
+
+  const btn = document.getElementById('mnuSubmitBtn');
+  const progress = document.getElementById('mnuProgress');
+  btn.disabled = true;
+  progress.textContent = '上傳中…';
+
+  try {
+    const user = auth.currentUser;
+    const docRef = db.collection('menus').doc();
+    const ext = _mnuFile.name.split('.').pop() || 'jpg';
+    const path = `menus/${_mnuShopId}/${docRef.id}.${ext}`;
+    const ref = storage.ref(path);
+    await ref.put(_mnuFile);
+    const url = await ref.getDownloadURL();
+
+    await docRef.set({
+      shopId:      _mnuShopId,
+      shopName:    _mnuShopName,
+      uid:         user.uid,
+      displayName: user.displayName || '匿名',
+      photoDate,
+      photo:       { thumb: url, original: url },
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 清除該店快取，下次重開 tab 才重抓
+    delete menuCache[_mnuShopId];
+    progress.textContent = '✅ 上傳成功！';
+    setTimeout(closeMenuModal, 800);
+    showStampToast('✅ 菜單照片已上傳');
+  } catch(e) {
+    progress.textContent = '❌ 上傳失敗：' + e.message;
+    btn.disabled = false;
+  }
+});
+
 // ── Queue helpers ──────────────────────────────────────────────────────────
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000;
@@ -3526,6 +3734,15 @@ function applyFeatureFlags() {
   // 制霸地圖連結
   const domLink = document.querySelector('.pd-action[href="domination.html"]');
   if (domLink) domLink.style.display = canView('domination') ? '' : 'none';
+
+  // 貼文 nav bar
+  const bnavPosts = document.getElementById('bnavPosts');
+  if (bnavPosts) {
+    const show = canView('postsNav');
+    bnavPosts.style.display = show ? '' : 'none';
+    // 若目前在貼文頁但權限被收回，切回搜尋器
+    if (!show && _currentPage === 'reviews') switchPage('finder');
+  }
 }
 
 // ── Rankings Modal ─────────────────────────────────────────────────────────
@@ -4521,6 +4738,41 @@ async function loadReviewsFeedPage(page = 1) {
       rfThumbs.forEach((img, idx) => {
         img.addEventListener('click', () => openPhotoViewer(rfUrls, idx, { date: rfPhotoDate, uid: rfUid, authorName: rfName }));
       });
+
+      // 留言區
+      const rfCommentsEl = document.createElement('div');
+      rfCommentsEl.className = 'review-comments';
+      card.appendChild(rfCommentsEl);
+      loadComments(doc.id, rfCommentsEl);
+
+      if (auth.currentUser) {
+        const rfFormEl = document.createElement('div');
+        rfFormEl.className = 'review-comment-form';
+        rfFormEl.innerHTML = `<input class="review-comment-input" placeholder="留言…" maxlength="100">
+          <button class="review-comment-send">送出</button>`;
+        card.appendChild(rfFormEl);
+        const rci = rfFormEl.querySelector('.review-comment-input');
+        const rcs = rfFormEl.querySelector('.review-comment-send');
+        rcs.addEventListener('click', async () => {
+          const text = rci.value.trim();
+          if (!text) return;
+          rcs.disabled = true;
+          try {
+            const u = auth.currentUser;
+            await db.collection('reviews').doc(doc.id).collection('comments').add({
+              uid: u.uid,
+              displayName: u.displayName || '匿名',
+              avatarUrl: u.photoURL || null,
+              text,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            });
+            rci.value = '';
+            loadComments(doc.id, rfCommentsEl);
+          } catch { showStampToast('留言失敗，請稍後再試'); }
+          rcs.disabled = false;
+        });
+      }
+
       list.appendChild(card);
     });
     updateDisplayNames(list);

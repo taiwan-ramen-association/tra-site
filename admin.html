@@ -388,7 +388,22 @@
         <td class="center"><select class="ff-select" data-col="perm"></select></td>
       </tr>
       <tr data-feat="reviews">
-        <td><span class="ff-feat-icon">💬</span><span class="ff-feat-name">評論</span></td>
+        <td><span class="ff-feat-icon">💬</span><span class="ff-feat-name">評論 tab</span></td>
+        <td class="center"><select class="ff-select" data-col="vis"></select></td>
+        <td class="center"><select class="ff-select" data-col="perm"></select></td>
+      </tr>
+      <tr data-feat="menuTab">
+        <td><span class="ff-feat-icon">🍜</span><span class="ff-feat-name">菜單 tab</span></td>
+        <td class="center"><select class="ff-select" data-col="vis"></select></td>
+        <td class="center"><select class="ff-select" data-col="perm"></select></td>
+      </tr>
+      <tr data-feat="photosTab">
+        <td><span class="ff-feat-icon">📷</span><span class="ff-feat-name">照片 tab</span></td>
+        <td class="center"><select class="ff-select" data-col="vis"></select></td>
+        <td class="center"><select class="ff-select" data-col="perm"></select></td>
+      </tr>
+      <tr data-feat="postsNav">
+        <td><span class="ff-feat-icon">📝</span><span class="ff-feat-name">貼文（底部 nav）</span></td>
         <td class="center"><select class="ff-select" data-col="vis"></select></td>
         <td class="center"><select class="ff-select" data-col="perm"></select></td>
       </tr>
@@ -710,6 +725,9 @@ const FF_DEFAULTS = {
   rankings:    { vis: 'viewer',   perm: 'viewer'   },
   domination:  { vis: 'viewer',   perm: 'viewer'   },
   reviews:     { vis: 'all',      perm: 'viewer'   },
+  menuTab:     { vis: 'viewer',   perm: 'viewer'   },
+  photosTab:   { vis: 'all',      perm: 'none'     },
+  postsNav:    { vis: 'viewer',   perm: 'viewer'   },
 };
 
 function buildFfSelects() {
