@@ -137,6 +137,25 @@
   .review-empty { padding: 18px 14px; text-align: center; color: var(--stone); font-size: 13px; }
   .review-load-more { display: block; width: 100%; padding: 8px; background: none; border: none; border-top: 1px solid var(--line); color: var(--red); font-size: 12px; cursor: pointer; font-family: inherit; text-align: center; }
   .review-load-more:hover { background: #fdf5f5; }
+  /* 評論留言 */
+  .review-comments { margin: 6px 0 4px 4px; padding-left: 10px; border-left: 2px solid var(--line); }
+  .review-comment { font-size: 12px; padding: 2px 0; line-height: 1.5; color: var(--ink); }
+  .review-comment-name { font-weight: 600; margin-right: 3px; }
+  .review-comments-more { font-size: 11px; color: var(--stone); background: none; border: none; cursor: pointer; padding: 2px 0; text-decoration: underline; font-family: inherit; display: block; margin-top: 2px; }
+  .review-comment-form { display: flex; gap: 6px; margin: 6px 0 2px; }
+  .review-comment-input { flex: 1; font-size: 12px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; font-family: inherit; background: var(--paper); color: var(--text); outline: none; min-width: 0; }
+  .review-comment-input:focus { border-color: var(--red); }
+  .review-comment-send { font-size: 12px; padding: 5px 10px; background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+  .review-comment-send:disabled { opacity: 0.55; cursor: default; }
+  /* 貼文頁分頁 */
+  .rf-pagination { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 10px 0 6px; flex-wrap: wrap; }
+  .rf-page-btn { min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--text); font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: inherit; transition: background 0.12s; }
+  .rf-page-btn:hover:not(:disabled):not(.active) { background: #fdf5f5; }
+  .rf-page-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 600; cursor: default; }
+  .rf-page-btn:disabled { opacity: 0.35; cursor: default; }
+  body.dark .review-comment-input { border-color: #3a3330; }
+  body.dark .rf-page-btn { border-color: #3a3330; background: #252220; }
+  body.dark .rf-page-btn:hover:not(:disabled):not(.active) { background: #2a1c1c; }
 
   /* ── REVIEW MODAL ── */
   .rv-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: none; }
@@ -1491,6 +1510,7 @@
   <div class="rf-page-card">
     <div class="rf-feed-title">📝 貼文</div>
     <div class="rf-list-inner" id="rfList"></div>
+    <div id="rfPagination" class="rf-pagination"></div>
   </div>
 </div>
 
@@ -2334,7 +2354,7 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.card-tab')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.review-comment-form') || e.target.closest('.review-comments-more') || e.target.closest('.card-tab')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
@@ -4027,6 +4047,42 @@ async function loadReviews(shopId, panel, append = false) {
         </div>
         ${d.text ? `<div class="review-text">${d.text.replace(/</g,'&lt;')}</div>` : ''}
         ${d.photos?.length ? `<div class="review-photos" data-photo-date="${d.photoDate || ''}">${photosHtml}</div>` : ''}`;
+
+      // 留言區
+      const commentsEl = document.createElement('div');
+      commentsEl.className = 'review-comments';
+      item.appendChild(commentsEl);
+      loadComments(doc.id, commentsEl);
+
+      // 留言表單（登入才顯示）
+      if (auth.currentUser) {
+        const formEl = document.createElement('div');
+        formEl.className = 'review-comment-form';
+        formEl.innerHTML = `<input class="review-comment-input" placeholder="留言…" maxlength="100">
+          <button class="review-comment-send">送出</button>`;
+        item.appendChild(formEl);
+        const cinput = formEl.querySelector('.review-comment-input');
+        const csend  = formEl.querySelector('.review-comment-send');
+        csend.addEventListener('click', async () => {
+          const text = cinput.value.trim();
+          if (!text) return;
+          csend.disabled = true;
+          try {
+            const u = auth.currentUser;
+            await db.collection('reviews').doc(doc.id).collection('comments').add({
+              uid: u.uid,
+              displayName: u.displayName || '匿名',
+              avatarUrl: u.photoURL || null,
+              text,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            });
+            cinput.value = '';
+            loadComments(doc.id, commentsEl);
+          } catch { showStampToast('留言失敗，請稍後再試'); }
+          csend.disabled = false;
+        });
+      }
+
       list.appendChild(item);
     });
     panel.appendChild(list);
@@ -4075,6 +4131,26 @@ async function loadReviews(shopId, panel, append = false) {
   } catch(e) {
     panel.innerHTML = `<div class="review-empty">載入失敗：${e.message}</div>`;
   }
+}
+
+// ── 留言（review 子集合）──────────────────────────────────────────────────────
+async function loadComments(reviewId, container, showAll = false) {
+  try {
+    const snap = await db.collection('reviews').doc(reviewId).collection('comments')
+      .orderBy('createdAt', 'asc').limit(showAll ? 100 : 3).get();
+    if (!snap.docs.length) { container.innerHTML = ''; return; }
+    container.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      return `<div class="review-comment"><span class="review-comment-name">${c.displayName || '匿名'}</span>：${c.text.replace(/</g,'&lt;')}</div>`;
+    }).join('');
+    if (!showAll && snap.docs.length >= 3) {
+      const btn = document.createElement('button');
+      btn.className = 'review-comments-more';
+      btn.textContent = '顯示更多留言…';
+      btn.addEventListener('click', () => { btn.remove(); loadComments(reviewId, container, true); });
+      container.appendChild(btn);
+    }
+  } catch {}
 }
 
 // ── User display cache（UID → { name, avatarUrl }）────────────────────────────
@@ -4303,8 +4379,10 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
     closeReviewModal();
 
     // 重置評論（下次切換時重新載入）
-    _rfLoaded = false;
-    _rfLastDoc = null;
+    _rfLoaded      = false;
+    _rfPageCursors = [null];
+    _rfCurrentPage = 1;
+    _rfMaxPage     = 1;
 
     // 重新載入該 shop 的評論 panel
     const panel = document.querySelector(`.card[data-shop-id="${_rvShopId}"] [data-tab-panel="reviews"]`);
@@ -4328,10 +4406,12 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
 
 // ── Reviews Feed ──────────────────────────────────────────────────────────────
 const RF_SEEN_KEY  = 'rvFeedSeen';
-const RF_PAGE_SIZE = 15;
-let _rfLastDoc  = null;
-let _rfLoaded   = false;
-let _currentPage = 'finder';
+const RF_PAGE_SIZE   = 10;
+let _rfPageCursors   = [null]; // index 0 = 起點，[n] = 第 n+1 頁的 startAfter cursor
+let _rfCurrentPage   = 1;
+let _rfMaxPage       = 1;
+let _rfLoaded        = false;
+let _currentPage     = 'finder';
 
 function getFeedSeen() {
   try { return new Set(JSON.parse(localStorage.getItem(RF_SEEN_KEY) || '[]')); }
@@ -4370,22 +4450,31 @@ async function checkUnreadBadge() {
   } catch {}
 }
 
-async function loadReviewsFeed(append = false) {
+async function loadReviewsFeedPage(page = 1) {
+  _rfCurrentPage = page;
   const list = document.getElementById('rfList');
-  if (!append) {
-    list.innerHTML = '<div class="rf-empty">載入中…</div>';
-    _rfLastDoc = null;
-  }
+  list.innerHTML = '<div class="rf-empty">載入中…</div>';
+
   try {
     let q = db.collection('reviews').orderBy('createdAt', 'desc').limit(RF_PAGE_SIZE);
-    if (_rfLastDoc) q = q.startAfter(_rfLastDoc);
+    const cursor = _rfPageCursors[page - 1];
+    if (cursor) q = q.startAfter(cursor);
+
     const snap = await q.get();
     const docs = snap.docs;
-    if (docs.length) _rfLastDoc = docs[docs.length - 1];
 
-    if (!append) list.innerHTML = '';
-    if (!docs.length && !append) {
+    // 記錄下一頁的起點 cursor
+    if (docs.length >= RF_PAGE_SIZE) {
+      if (!_rfPageCursors[page]) _rfPageCursors[page] = docs[docs.length - 1];
+      _rfMaxPage = Math.max(_rfMaxPage, page + 1);
+    } else {
+      _rfMaxPage = page; // 這是最後一頁
+    }
+
+    list.innerHTML = '';
+    if (!docs.length) {
       list.innerHTML = '<div class="rf-empty">目前還沒有評論</div>';
+      renderRfPagination();
       _rfLoaded = true;
       return;
     }
@@ -4435,23 +4524,32 @@ async function loadReviewsFeed(append = false) {
       list.appendChild(card);
     });
     updateDisplayNames(list);
-
-    // 載入更多
-    const old = list.querySelector('.rf-load-more');
-    if (old) old.remove();
-    if (docs.length >= RF_PAGE_SIZE) {
-      const more = document.createElement('button');
-      more.className = 'rf-load-more';
-      more.textContent = '載入更多…';
-      more.addEventListener('click', () => loadReviewsFeed(true));
-      list.appendChild(more);
-    }
+    renderRfPagination();
     _rfLoaded = true;
     updateUnreadBadge();
   } catch (e) {
-    console.error('loadReviewsFeed 失敗', e);
-    if (!append) list.innerHTML = `<div class="rf-empty">載入失敗：${e.message}</div>`;
+    console.error('loadReviewsFeedPage 失敗', e);
+    list.innerHTML = `<div class="rf-empty">載入失敗：${e.message}</div>`;
   }
+}
+
+function renderRfPagination() {
+  const el = document.getElementById('rfPagination');
+  if (!el) return;
+  const pages = Array.from({ length: _rfMaxPage }, (_, i) => i + 1);
+  el.innerHTML =
+    `<button class="rf-page-btn rf-page-prev" ${_rfCurrentPage <= 1 ? 'disabled' : ''}>◄</button>` +
+    pages.map(p => `<button class="rf-page-btn${p === _rfCurrentPage ? ' active' : ''}" data-page="${p}">${p}</button>`).join('') +
+    `<button class="rf-page-btn rf-page-next" ${_rfCurrentPage >= _rfMaxPage ? 'disabled' : ''}>►</button>`;
+  el.querySelector('.rf-page-prev').addEventListener('click', () => {
+    if (_rfCurrentPage > 1) loadReviewsFeedPage(_rfCurrentPage - 1);
+  });
+  el.querySelector('.rf-page-next').addEventListener('click', () => {
+    if (_rfCurrentPage < _rfMaxPage) loadReviewsFeedPage(_rfCurrentPage + 1);
+  });
+  el.querySelectorAll('.rf-page-btn[data-page]').forEach(btn =>
+    btn.addEventListener('click', () => loadReviewsFeedPage(+btn.dataset.page))
+  );
 }
 
 // ── Scroll lock (modal 開啟時鎖定 mainContent 捲動，nav bar 不受影響) ─────────
@@ -4480,7 +4578,7 @@ function switchPage(page) {
     finderEl.classList.add('page-left');
     document.getElementById('bnavFinder').classList.remove('active');
     document.getElementById('bnavPosts').classList.add('active');
-    if (!_rfLoaded) loadReviewsFeed();
+    if (!_rfLoaded) loadReviewsFeedPage(1);
     markFeedPageSeen();
   }
 }
