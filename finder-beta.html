@@ -781,6 +781,20 @@
   }
 
   /* ── REVIEWS FEED ── */
+  .rf-toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .rf-toolbar-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 13px; border-radius: 20px; border: 1.5px solid var(--line);
+    background: var(--paper); color: var(--ink); font-size: 13px;
+    font-family: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .rf-toolbar-btn:hover { border-color: var(--red); background: #fff5f5; }
+  .rf-toolbar-btn.ff-locked { opacity: 0.5; cursor: not-allowed; }
+  body.dark .rf-toolbar-btn:hover { background: #2a1a14; }
   .rf-feed-title {
     font-family: 'Noto Serif TC', serif;
     font-size: 17px; font-weight: 700; color: var(--ink);
@@ -1417,7 +1431,6 @@
   <div class="pd-actions">
     <button class="pd-action" id="darkModeBtn">🌙 深色模式<span class="dark-toggle" id="darkToggle"></span></button>
     <button class="pd-action" id="favFilterBtn" style="display:none">♥ 收藏清單</button>
-    <button class="pd-action" id="rankingsPdBtn" style="display:none">🏆 回報排行榜</button>
     <a class="pd-action" href="domination.html">🗾 制霸地圖</a>
     <a class="pd-action" id="adminLink" href="admin.html" style="display:none">⚙️ 會員管理</a>
     <button class="pd-action" id="clearDataBtn" style="color:#c00">🗑 清除我的所有記憶</button>
@@ -1526,6 +1539,10 @@
 <div id="pageReviews" class="page-layer page-right">
   <div class="rf-page-card">
     <div class="rf-feed-title">📝 貼文</div>
+    <div class="rf-toolbar" id="rfToolbar">
+      <button class="rf-toolbar-btn" id="rankingsPdBtn" style="display:none">🏆 回報排行榜</button>
+      <!-- 未來可在此新增更多工具列按鈕 -->
+    </div>
     <div class="rf-list-inner" id="rfList"></div>
     <div id="rfPagination" class="rf-pagination"></div>
   </div>
@@ -2529,7 +2546,7 @@ document.getElementById('favFilterBtn').addEventListener('click', () => {
   closeProfileDropdown();
   render();
 });
-document.getElementById('rankingsPdBtn').addEventListener('click', () => { closeProfileDropdown(); openRankingsModal(); });
+document.getElementById('rankingsPdBtn').addEventListener('click', () => { openRankingsModal(); });
 
 // 攔截所有 pd-action.ff-locked 的點擊（含 <a> 導頁）
 document.querySelector('.profile-dropdown').addEventListener('click', e => {
