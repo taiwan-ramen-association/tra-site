@@ -103,10 +103,10 @@
   /* ── REVIEWS ── */
   .review-list { padding: 2px 0 6px; }
   .review-header-row {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: flex-start;
     padding: 10px 14px 6px; gap: 8px;
   }
-  .review-count-label { font-size: 12px; color: var(--stone); }
+  .review-count-label { font-size: 12px; color: var(--stone); margin-left: auto; }
   .write-review-btn {
     display: flex; align-items: center; gap: 4px;
     padding: 5px 12px; background: var(--red); color: #fff;
@@ -417,7 +417,7 @@
   .photo-attribution { font-size: 10px; color: var(--stone); text-align: right; padding: 2px 0 6px; }
   /* ── MENU TAB ── */
   .mnu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px 0 4px; }
-  .mnu-grid a { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: var(--line); position: relative; }
+  .mnu-grid .mnu-thumb { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: var(--line); position: relative; cursor: pointer; }
   .mnu-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .mnu-date-badge { position: absolute; bottom: 3px; left: 3px; font-size: 9px; background: rgba(0,0,0,0.55); color: #fff; padding: 1px 4px; border-radius: 3px; pointer-events: none; }
   .mnu-upload-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; background: var(--red); color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity 0.15s; margin-bottom: 8px; }
@@ -2394,7 +2394,7 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.review-comment-form') || e.target.closest('.review-comments-more') || e.target.closest('.card-tab')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.review-comment-form') || e.target.closest('.review-comments-more') || e.target.closest('.card-tab') || e.target.closest('.mnu-thumb')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
@@ -3082,14 +3082,20 @@ async function loadShopMenu(shop, panel, append = false) {
 
     const grid = document.createElement('div');
     grid.className = 'mnu-grid';
-    docs.forEach(doc => {
+    const allMnuUrls = docs.map(doc => {
       const d = doc.data();
-      const a = document.createElement('a');
-      a.href = d.photo?.original || d.photo?.thumb || '#';
-      a.target = '_blank'; a.rel = 'noopener';
-      a.innerHTML = `<img src="${d.photo?.thumb || d.photo?.original}" alt="菜單" loading="lazy">
+      return d.photo?.original || d.photo?.thumb || '';
+    });
+    docs.forEach((doc, idx) => {
+      const d = doc.data();
+      const thumb = document.createElement('div');
+      thumb.className = 'mnu-thumb';
+      thumb.innerHTML = `<img src="${d.photo?.thumb || d.photo?.original}" alt="菜單" loading="lazy">
         ${d.photoDate ? `<span class="mnu-date-badge">${d.photoDate}</span>` : ''}`;
-      grid.appendChild(a);
+      thumb.addEventListener('click', () =>
+        openPhotoViewer(allMnuUrls, idx, { date: d.photoDate || '', uid: d.uid || '', authorName: d.displayName || '匿名' })
+      );
+      grid.appendChild(thumb);
     });
     panel.appendChild(grid);
 
@@ -3199,9 +3205,15 @@ document.getElementById('mnuSubmitBtn').addEventListener('click', async () => {
     });
 
     delete menuCache[_mnuShopId];
-    progress.textContent = '✅ 上傳成功！';
-    setTimeout(closeMenuModal, 800);
     showStampToast('✅ 菜單照片已上傳');
+    closeMenuModal();
+
+    // 重新載入該 shop 的菜單 panel（同 review 做法）
+    const menuPanel = document.querySelector(`.card[data-shop-id="${_mnuShopId}"] [data-tab-panel="menu"] .menu-tab-inner`);
+    if (menuPanel) {
+      const shop = ALL_DATA.find(s => s['ID'] === _mnuShopId);
+      if (shop) loadShopMenu(shop, menuPanel);
+    }
   } catch(e) {
     progress.textContent = '❌ 上傳失敗：' + e.message;
     btn.disabled = false;
@@ -4229,12 +4241,12 @@ async function loadReviews(shopId, panel, append = false) {
       headerRow.className = 'review-header-row';
       const canWrite = canView('reviews') && canUse('reviews') && auth.currentUser;
       headerRow.innerHTML = `
-        <span class="review-count-label">共 ${total} 則評論</span>
         ${canView('reviews') ? `<button class="write-review-btn${canWrite ? '' : ' locked'}"
           id="writeReviewBtn_${shopId}"
           ${canWrite ? '' : 'disabled title="需登入才能評論"'}>
           ✍ 寫評論
-        </button>` : ''}`;
+        </button>` : ''}
+        <span class="review-count-label">共 ${total} 則評論</span>`;
       panel.insertBefore(headerRow, panel.firstChild);
       if (canWrite) {
         headerRow.querySelector(`#writeReviewBtn_${shopId}`)
