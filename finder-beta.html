@@ -420,8 +420,8 @@
   .mnu-grid a { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: var(--line); position: relative; }
   .mnu-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .mnu-date-badge { position: absolute; bottom: 3px; left: 3px; font-size: 9px; background: rgba(0,0,0,0.55); color: #fff; padding: 1px 4px; border-radius: 3px; pointer-events: none; }
-  .mnu-upload-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px; margin-bottom: 8px; background: var(--paper); border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; color: var(--stone); cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
-  .mnu-upload-btn:hover { border-color: var(--red); color: var(--red); }
+  .mnu-upload-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; background: var(--red); color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity 0.15s; margin-bottom: 8px; }
+  .mnu-upload-btn:hover { opacity: 0.85; }
   .mnu-load-more { display: block; width: 100%; padding: 7px; background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--stone); font-size: 12px; cursor: pointer; font-family: inherit; margin-top: 6px; }
 
   .tab-placeholder {
@@ -3101,7 +3101,8 @@ async function loadShopMenu(shop, panel, append = false) {
       panel.appendChild(moreBtn);
     }
   } catch(e) {
-    loading.textContent = '載入失敗，請稍後再試';
+    loading.remove();
+    panel.insertAdjacentHTML('beforeend', '<p class="tab-placeholder" style="padding:8px 0">暫無資料，不如你來上傳吧！</p>');
   }
 }
 
