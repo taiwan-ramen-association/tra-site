@@ -755,9 +755,11 @@
   body.finder-hidden .rv-modal,
   body.finder-hidden #mnuBackdrop,
   body.finder-hidden #mnuModal,
-  /* reviews-page modals：切回 finder 時由 body.reviews-hidden 隱藏 */
+  /* reviews-page modals */
   body.reviews-hidden .rk-backdrop,
   body.reviews-hidden .rk-modal { display: none !important; }
+  /* challenges-page modals（目前無，預留） */
+  /* body.challenges-hidden .xxx { display: none !important; } */
   /* Departing page: shrinks & fades to the left */
   .page-layer.page-left {
     transform: translateX(-22%) scale(0.96);
@@ -1376,7 +1378,7 @@
   .rv-date-input:focus { border-color: var(--red); }
 </style>
 </head>
-<body class="reviews-hidden">
+<body class="reviews-hidden challenges-hidden">
 
 <header>
   <h1>🍜 台灣拉麵協會－拉麵搜尋器 <span style="font-size:11px;background:rgba(255,255,255,0.25);padding:2px 7px;border-radius:10px;font-weight:400;letter-spacing:0;">BETA</span></h1>
@@ -4971,6 +4973,7 @@ function switchPage(page) {
   if (page === 'finder') {
     document.body.classList.remove('finder-hidden');
     document.body.classList.add('reviews-hidden');
+    document.body.classList.add('challenges-hidden');
     finderEl.classList.add('page-active');
     reviewsEl.classList.add('page-right');
     challengesEl.classList.add('page-right');
@@ -4978,6 +4981,7 @@ function switchPage(page) {
   } else if (page === 'reviews') {
     document.body.classList.add('finder-hidden');
     document.body.classList.remove('reviews-hidden');
+    document.body.classList.add('challenges-hidden');
     finderEl.classList.add('page-left');
     reviewsEl.classList.add('page-active');
     challengesEl.classList.add('page-right');
@@ -4986,7 +4990,8 @@ function switchPage(page) {
     markFeedPageSeen();
   } else if (page === 'challenges') {
     document.body.classList.add('finder-hidden');
-    document.body.classList.remove('reviews-hidden');
+    document.body.classList.add('reviews-hidden');
+    document.body.classList.remove('challenges-hidden');
     finderEl.classList.add('page-left');
     reviewsEl.classList.add('page-left');
     challengesEl.classList.add('page-active');
