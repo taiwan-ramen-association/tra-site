@@ -962,9 +962,9 @@
   #pdDisplayName:hover { color: var(--red); }
   .pd-nick-field {
     display: block; width: 100%; margin-bottom: 8px;
-    padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px;
+    padding: 4px 0; border: none;
     font-size: 11px; color: var(--stone); background: transparent;
-    box-sizing: border-box; font-family: inherit; min-height: 26px;
+    box-sizing: border-box; font-family: inherit;
   }
   /* Nickname edit popup */
   .pd-nick-popup {
@@ -1358,7 +1358,7 @@
 
   <!-- 自定義顯示身份 -->
   <div class="pd-customize">
-    <label class="pd-nick-field" id="pdNickField"></label>
+    <div class="pd-nick-field" id="pdNickField">自定義顯示身分</div>
     <div class="pd-customize-row">
       <div class="pd-avatar-wrap" id="pdAvatarWrap">
         <img class="pd-header-avatar" id="pdHeaderAvatar" src="">
@@ -2838,7 +2838,7 @@ pdDisplayName.addEventListener('click', e => {
   const isOpen = popup.style.display !== 'none';
   popup.style.display = isOpen ? 'none' : 'block';
   if (!isOpen) {
-    nicknameInput.value = document.getElementById('pdNickField').textContent;
+    nicknameInput.value = pdDisplayName.textContent;
     nicknameInput.focus();
   }
 });
@@ -2857,7 +2857,6 @@ saveProfileBtn.addEventListener('click', async () => {
     const nickname = nicknameInput.value.trim();
     await db.collection('users').doc(user.uid).update({ nickname });
     pdDisplayName.textContent = nickname || user.displayName || '';
-    document.getElementById('pdNickField').textContent = nickname;
     document.getElementById('pdNickPopup').style.display = 'none';
     showStampToast('✅ 已儲存！');
   } catch (e) {
@@ -3811,7 +3810,6 @@ auth.onAuthStateChanged(async user => {
       pdEmail.value = user.email || '';
       // 自定義顯示身份區
       pdDisplayName.textContent                            = userData.nickname || user.displayName || '';
-      document.getElementById('pdNickField').textContent        = userData.nickname || '';
       nicknameInput.value                                  = userData.nickname || '';
       adminLink.style.display   = userData.role === 'admin' ? 'flex' : 'none';
       isWarned = userData.role === 'warned';
