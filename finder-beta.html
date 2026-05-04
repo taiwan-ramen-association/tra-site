@@ -3149,6 +3149,7 @@ function openMenuModal(shopId, shopName) {
   _mnuFile = null;
   document.getElementById('mnuTitle').textContent = `📷 上傳菜單 — ${shopName}`;
   document.getElementById('mnuPhotoDate').value = '';
+  document.getElementById('mnuPhotoDate').max = new Date().toISOString().split('T')[0];
   document.getElementById('mnuProgress').textContent = '';
   document.getElementById('mnuSubmitBtn').disabled = true;
   document.getElementById('mnuPreviewGrid').innerHTML = '';
@@ -3184,7 +3185,7 @@ function onMnuFileChange(e) {
 }
 
 function checkMnuReady() {
-  const hasDate  = !!document.getElementById('mnuPhotoDate')?.value;
+  const hasDate  = isValidPhotoDate(document.getElementById('mnuPhotoDate')?.value);
   const hasPhoto = !!_mnuFile;
   document.getElementById('mnuSubmitBtn').disabled = !(hasDate && hasPhoto);
 }
@@ -3207,7 +3208,10 @@ document.getElementById('mnuBackdrop').addEventListener('click', e => {
 document.getElementById('mnuSubmitBtn').addEventListener('click', async () => {
   if (!_mnuFile || !_mnuShopId || !auth.currentUser) return;
   const photoDate = document.getElementById('mnuPhotoDate').value;
-  if (!photoDate) return;
+  if (!isValidPhotoDate(photoDate)) {
+    document.getElementById('mnuProgress').textContent = '❌ 日期格式錯誤或不可為未來日期';
+    return;
+  }
 
   const btn      = document.getElementById('mnuSubmitBtn');
   const progress = document.getElementById('mnuProgress');
@@ -4548,6 +4552,7 @@ function openReviewModal(shopId, shopName) {
   document.getElementById('rvTitle').textContent = `✍ 寫評論 — ${shopName}`;
   document.getElementById('rvText').value = '';
   document.getElementById('rvPhotoDate').value = '';
+  document.getElementById('rvPhotoDate').max = new Date().toISOString().split('T')[0];
   document.getElementById('rvPreviewGrid').innerHTML = '';
   document.getElementById('rvProgress').textContent = '';
   document.getElementById('rvSubmitBtn').disabled = true;
@@ -4584,9 +4589,17 @@ document.querySelectorAll('.star-btn').forEach(b => {
   b.addEventListener('mouseout', () => updateRvStars(_rvRating));
 });
 
+function isValidPhotoDate(val) {
+  if (!val || !/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
+  const d = new Date(val + 'T00:00:00');
+  if (isNaN(d.getTime())) return false;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return d <= today;
+}
+
 function checkRvSubmitReady() {
   const hasContent = _rvRating > 0 || document.getElementById('rvText').value.trim().length > 0;
-  const hasDate    = !!document.getElementById('rvPhotoDate').value;
+  const hasDate    = isValidPhotoDate(document.getElementById('rvPhotoDate').value);
   document.getElementById('rvSubmitBtn').disabled = !(hasContent && hasDate);
 }
 document.getElementById('rvText').addEventListener('input', checkRvSubmitReady);
@@ -4629,6 +4642,11 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
   if (!_rvShopId || !auth.currentUser) return;
   const text = document.getElementById('rvText').value.trim();
   if (!_rvRating && !text && !_rvFiles.length) return;
+  const rvPhotoDate = document.getElementById('rvPhotoDate').value;
+  if (!isValidPhotoDate(rvPhotoDate)) {
+    document.getElementById('rvProgress').textContent = '❌ 日期格式錯誤或不可為未來日期';
+    return;
+  }
 
   const submitBtn = document.getElementById('rvSubmitBtn');
   const cancelBtn = document.getElementById('rvCancelBtn');
@@ -4660,7 +4678,7 @@ document.getElementById('rvSubmitBtn').addEventListener('click', async () => {
       rating:      _rvRating,
       text,
       photos,
-      photoDate:   document.getElementById('rvPhotoDate').value,
+      photoDate:   rvPhotoDate,
       createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
     });
 
