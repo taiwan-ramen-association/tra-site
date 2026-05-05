@@ -1702,7 +1702,7 @@
       <div>
         <span class="rv-label">照片（最多 5 張）</span>
         <div class="rv-upload-area" id="rvUploadArea">
-          <input type="file" id="rvFileInput" accept="image/*" multiple>
+          <input type="file" id="rvFileInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif" multiple>
           📷 點擊或拖放圖片上傳
         </div>
         <div class="rv-preview-grid" id="rvPreviewGrid" style="margin-top:10px"></div>
@@ -1749,7 +1749,7 @@
       <div>
         <span class="rv-label">照片（限 1 張）<span style="color:var(--red)">*</span></span>
         <div class="rv-upload-area" id="mnuUploadArea">
-          <input type="file" id="mnuFileInput" accept="image/*">
+          <input type="file" id="mnuFileInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif">
           📷 點擊上傳照片
         </div>
         <div class="rv-preview-grid" id="mnuPreviewGrid" style="margin-top:10px"></div>
@@ -2466,7 +2466,7 @@ function render() {
           }
         }
         // 切到照片時 lazy load
-        if (target === 'photos') {
+        if (target === 'photos' && canView('photosTab')) {
           const shopId = card.dataset.shopId;
           const shop   = ALL_DATA.find(s => s['ID'] === shopId);
           const photoPanel = detail.querySelector('[data-tab-panel="photos"]');
@@ -3196,7 +3196,7 @@ function openMenuModal(shopId, shopName) {
   document.getElementById('mnuPreviewGrid').innerHTML = '';
   // 重置上傳區
   const area = document.getElementById('mnuUploadArea');
-  area.innerHTML = `<input type="file" id="mnuFileInput" accept="image/*">📷 點擊上傳照片`;
+  area.innerHTML = `<input type="file" id="mnuFileInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif">📷 點擊上傳照片`;
   area.querySelector('#mnuFileInput').addEventListener('change', onMnuFileChange);
   document.getElementById('mnuBackdrop').classList.add('open');
   document.getElementById('mnuModal').classList.add('open');
@@ -3218,7 +3218,7 @@ function onMnuFileChange(e) {
     preview.innerHTML = '';
     // 重置 input 讓使用者可再次選擇
     const area = document.getElementById('mnuUploadArea');
-    area.innerHTML = `<input type="file" id="mnuFileInput" accept="image/*">📷 點擊上傳照片`;
+    area.innerHTML = `<input type="file" id="mnuFileInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif">📷 點擊上傳照片`;
     area.querySelector('#mnuFileInput').addEventListener('change', onMnuFileChange);
     checkMnuReady();
   });
@@ -3257,15 +3257,16 @@ document.getElementById('mnuSubmitBtn').addEventListener('click', async () => {
   const btn      = document.getElementById('mnuSubmitBtn');
   const progress = document.getElementById('mnuProgress');
   btn.disabled = true;
-  progress.textContent = '上傳中…';
+  progress.textContent = '壓縮中…';
 
   try {
-    const user    = auth.currentUser;
+    const user       = auth.currentUser;
+    const compressed = await compressImage(_mnuFile, { maxPx: 1200, maxKB: 400 });
+    progress.textContent = '上傳中…';
     const docRef  = db.collection('menus').doc();
-    const ext     = _mnuFile.name.split('.').pop() || 'jpg';
-    const path    = `menus/${_mnuShopId}/${docRef.id}.${ext}`;
+    const path    = `menus/${_mnuShopId}/${docRef.id}.webp`;
     const ref     = storage.ref(path);
-    await ref.put(_mnuFile);
+    await ref.put(compressed, { contentType: 'image/webp' });
     const url = await ref.getDownloadURL();
 
     await docRef.set({
@@ -4115,15 +4116,15 @@ auth.onAuthStateChanged(async user => {
         } catch (e) {
           console.error('[首次登入] 寫入基本欄位失敗：', e);
         }
-        // Step 2：分配 memberNo（獨立，失敗不影響 Step 1）
+        // Step 2：分配 memberNo（Transaction 確保不重複）
         try {
           const counterRef = db.collection('meta').doc('counters');
-          const cs = await counterRef.get();
-          const memberNo = cs.exists ? (cs.data().memberCount || 0) + 1 : 1;
-          cs.exists
-            ? await counterRef.update({ memberCount: memberNo })
-            : await counterRef.set({ memberCount: 1 });
-          await userRef.update({ memberNo });
+          await db.runTransaction(async tx => {
+            const cs = await tx.get(counterRef);
+            const memberNo = cs.exists ? (cs.data().memberCount || 0) + 1 : 1;
+            tx.set(counterRef, { memberCount: memberNo }, { merge: true });
+            tx.update(userRef, { memberNo });
+          });
         } catch (e) {
           console.error('[首次登入] memberNo 分配失敗：', e);
         }
@@ -4298,24 +4299,21 @@ function compressImage(file, { maxPx = 1200, maxKB = 400 } = {}) {
 const makeThumb    = f => compressImage(f, { maxPx: 400,  maxKB: 60  });
 const makeOriginal = f => compressImage(f, { maxPx: 1200, maxKB: 400 });
 
-// ── Storage 上傳單張 ─────────────────────────────────────────────────────────
+// ── Storage 上傳單張（只存一份壓縮檔，thumb 與 original 共用同一 URL）────────
 async function uploadReviewPhoto(file, shopId, reviewId, idx, onUploadStart) {
   const t0 = performance.now();
-  const [orig, thumb] = await Promise.all([makeOriginal(file), makeThumb(file)]);
+  const compressed = await compressImage(file, { maxPx: 900, maxKB: 250 });
   const t1 = performance.now();
-  console.log(`[photo ${idx}] 壓縮: ${(t1-t0).toFixed(0)}ms | orig ${(orig.size/1024).toFixed(0)}KB thumb ${(thumb.size/1024).toFixed(0)}KB`);
+  console.log(`[photo ${idx}] 壓縮: ${(t1-t0).toFixed(0)}ms | ${(compressed.size/1024).toFixed(0)}KB`);
 
   onUploadStart?.();
-  const base = `reviews/${shopId}/${reviewId}/photo_${idx}`;
-  const [os, ts] = await Promise.all([
-    storage.ref(`${base}_orig.webp`).put(orig,  { contentType: 'image/webp' }),
-    storage.ref(`${base}_thumb.webp`).put(thumb, { contentType: 'image/webp' }),
-  ]);
+  const path = `reviews/${shopId}/${reviewId}/photo_${idx}.webp`;
+  const snap = await storage.ref(path).put(compressed, { contentType: 'image/webp' });
   const t2 = performance.now();
   console.log(`[photo ${idx}] 上傳: ${(t2-t1).toFixed(0)}ms`);
 
-  const [origUrl, thumbUrl] = await Promise.all([os.ref.getDownloadURL(), ts.ref.getDownloadURL()]);
-  return { original: origUrl, thumb: thumbUrl };
+  const url = await snap.ref.getDownloadURL();
+  return { original: url, thumb: url };
 }
 
 // ── 刪除 Storage 裡的照片 ────────────────────────────────────────────────────
@@ -4396,7 +4394,7 @@ async function loadReviews(shopId, panel, append = false) {
             ? `<img class="review-avatar" src="${d.avatarUrl}" alt="">`
             : `<div class="review-avatar-placeholder">👤</div>`}
           <div class="review-meta">
-            <div class="review-name" data-uid="${d.uid}">${d.displayName || '匿名'}</div>
+            <div class="review-name" data-uid="${d.uid}">${escapeHtml(d.displayName || '匿名')}</div>
             <div class="review-date">${dateStr}</div>
           </div>
           <div>
@@ -4404,7 +4402,7 @@ async function loadReviews(shopId, panel, append = false) {
             ${canDel ? `<button class="review-del-btn" data-docid="${doc.id}" data-shopid="${shopId}">🗑 刪除</button>` : ''}
           </div>
         </div>
-        ${d.text ? `<div class="review-text">${d.text.replace(/</g,'&lt;')}</div>` : ''}
+        ${d.text ? `<div class="review-text">${escapeHtml(d.text)}</div>` : ''}
         ${d.photos?.length ? `<div class="review-photos" data-photo-date="${d.photoDate || ''}">${photosHtml}</div>` : ''}`;
 
       // 留言區
@@ -4453,9 +4451,6 @@ async function loadReviews(shopId, panel, append = false) {
         btn.disabled = true;
         try {
           const docId = btn.dataset.docid;
-          const sId   = btn.dataset.shopid;
-          const rSnap = await db.collection('reviews').doc(docId).get();
-          if (rSnap.exists) await deleteReviewPhotos(sId, docId, rSnap.data().photos);
           await db.collection('reviews').doc(docId).delete();
           btn.closest('.review-item').remove();
           showStampToast('✅ 已刪除評論');
@@ -4500,7 +4495,7 @@ async function loadComments(reviewId, container, showAll = false) {
     if (!snap.docs.length) { container.innerHTML = ''; return; }
     container.innerHTML = snap.docs.map(d => {
       const c = d.data();
-      return `<div class="review-comment"><span class="review-comment-name">${c.displayName || '匿名'}</span>：${c.text.replace(/</g,'&lt;')}</div>`;
+      return `<div class="review-comment"><span class="review-comment-name">${escapeHtml(c.displayName || '匿名')}</span>：${escapeHtml(c.text)}</div>`;
     }).join('');
     if (!showAll && snap.docs.length >= 3) {
       const btn = document.createElement('button');
@@ -4874,15 +4869,15 @@ async function loadReviewsFeedPage(page = 1) {
             ? `<img class="rf-avatar" src="${d.avatarUrl}" alt="">`
             : `<div class="rf-avatar-ph">👤</div>`}
           <div class="rf-user-info">
-            <span class="rf-username" data-uid="${d.uid}">${d.displayName || '匿名'}</span>
-            <span class="rf-shopname">📍 ${d.shopName || ''}</span>
+            <span class="rf-username" data-uid="${d.uid}">${escapeHtml(d.displayName || '匿名')}</span>
+            <span class="rf-shopname">📍 ${escapeHtml(d.shopName || '')}</span>
           </div>
           <div class="rf-right">
             <span class="rf-stars">${stars}</span>
             <span class="rf-date">${dateStr}</span>
           </div>
         </div>
-        ${d.text ? `<div class="rf-text">${d.text}</div>` : ''}
+        ${d.text ? `<div class="rf-text">${escapeHtml(d.text)}</div>` : ''}
         ${photosHtml ? `<div class="rf-photos" data-photo-date="${d.photoDate || ''}">${photosHtml}</div>` : ''}
         <span class="rf-unread-dot"></span>`;
 
