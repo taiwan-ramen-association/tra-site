@@ -3262,11 +3262,11 @@ document.getElementById('mnuSubmitBtn').addEventListener('click', async () => {
   try {
     const user       = auth.currentUser;
     const compressed = await compressImage(_mnuFile, { maxPx: 1200, maxKB: 280 });
-    progress.textContent = `上傳中… (${(compressed.size/1024).toFixed(0)}KB, ${compressed.type})`;
+    progress.textContent = '上傳中…';
     const docRef  = db.collection('menus').doc();
     const path    = `menus/${_mnuShopId}/${docRef.id}.webp`;
     const ref     = storage.ref(path);
-    await ref.put(compressed, { contentType: 'image/webp' });
+    await ref.put(compressed, { contentType: compressed.type });
     const url = await ref.getDownloadURL();
 
     await docRef.set({
@@ -4280,16 +4280,22 @@ function compressImage(file, { maxPx = 1200, maxKB = 400 } = {}) {
       const canvas = document.createElement('canvas');
       canvas.width = width; canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      // 步進 0.15 加快收斂（最多 4 次）
-      let q = 0.82;
-      const tryBlob = () => {
-        canvas.toBlob(blob => {
-          if (!blob) { reject(new Error('compress failed')); return; }
-          if (blob.size > maxKB * 1024 && q > 0.28) { q = Math.max(0.28, q - 0.15); tryBlob(); return; }
-          resolve(new File([blob], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' }));
-        }, 'image/webp', q);
+
+      // 先嘗試 WebP；iOS 不支援時 canvas.toBlob 會 fallback 成 PNG（blob.type === 'image/png'），
+      // 此時改用 JPEG（有 quality 參數，所有平台皆支援）
+      const tryFormat = (format) => {
+        let q = 0.82;
+        const tryBlob = () => {
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('compress failed')); return; }
+            if (format === 'image/webp' && blob.type === 'image/png') { tryFormat('image/jpeg'); return; }
+            if (blob.size > maxKB * 1024 && q > 0.28) { q = Math.max(0.28, q - 0.15); tryBlob(); return; }
+            resolve(new File([blob], file.name.replace(/\.\w+$/, format === 'image/jpeg' ? '.jpg' : '.webp'), { type: blob.type }));
+          }, format, q);
+        };
+        tryBlob();
       };
-      tryBlob();
+      tryFormat('image/webp');
     };
     img.onerror = reject;
     img.src = url;
@@ -4308,7 +4314,7 @@ async function uploadReviewPhoto(file, shopId, reviewId, idx, onUploadStart) {
 
   onUploadStart?.();
   const path = `reviews/${shopId}/${reviewId}/photo_${idx}.webp`;
-  const snap = await storage.ref(path).put(compressed, { contentType: 'image/webp' });
+  const snap = await storage.ref(path).put(compressed, { contentType: compressed.type });
   const t2 = performance.now();
   console.log(`[photo ${idx}] 上傳: ${(t2-t1).toFixed(0)}ms`);
 
