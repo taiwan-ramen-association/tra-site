@@ -35,5 +35,4 @@ apps script.json
 functions/node_modules/
 .firebase/
 firebase-debug.log
-storage.rules
 _memory/
