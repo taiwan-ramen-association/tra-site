@@ -13,7 +13,8 @@
 5. [自動化排程](#自動化排程)
 6. [內容頁面維護](#內容頁面維護)
 7. [環境架設](#環境架設)
-8. [部署](#部署)
+8. [部署與 Git 同步](#部署與-git-同步)
+9. [Firebase 設定檔說明](#firebase-設定檔說明)
 
 ---
 
@@ -429,14 +430,89 @@ pip install openpyxl requests gspread google-auth
 
 ---
 
-## 部署
+## 部署與 Git 同步
 
 靜態網站，push 至 `main` branch 即自動部署至 GitHub Pages。
 
+### Repo 架構
+
+| Repo | 可見性 | 用途 | 本地路徑 |
+|------|--------|------|----------|
+| `taiwan-ramen-association.github.io` | Public | 主程式碼、網站 | 專案根目錄 |
+| `ramen-finder-notes` | Private | 開發筆記、rules 快照 | `_memory/` |
+
+### Git 同步工具（推薦）
+
 ```bash
-git add .
-git commit -m "更新說明"
-git push
+python tools/git_sync.py
 ```
 
+| 選項 | 功能 |
+|------|------|
+| **A** | 全部 Pull（Public 主 repo + Private _memory） |
+| **B** | 全部 Push（Public + Private，各自輸入 commit 訊息） |
+| **1** | Public Pull（主 repo） |
+| **2** | Public Push（主 repo） |
+| **3** | Private Pull（_memory） |
+| **4** | Private Push（_memory） |
+| **s** | 查看兩個 repo 的 git status |
+| **q** | 離開 |
+
+Push 時會顯示未提交的檔案，並讓你選擇 add 範圍（全部 / 已追蹤 / 手動指定），確認後才 commit + push。
+
+### 換平台時的首次設定
+
+```bash
+# clone 主 repo
+git clone https://github.com/taiwan-ramen-association/taiwan-ramen-association.github.io.git
+cd taiwan-ramen-association.github.io
+
+# clone private 筆記 repo 到 _memory/
+git clone https://github.com/taiwan-ramen-association/ramen-finder-notes _memory
+```
+
+### Firebase Rules 管理
+
+Rules 快照存於 `_memory/rules/`（private，有版控）：
+
+| 檔案 | 說明 |
+|------|------|
+| `_memory/rules/firestore.txt` | Firestore Security Rules 快照 |
+| `_memory/rules/storage.txt` | Storage Security Rules 快照 |
+| `_memory/rules/storage.rules` | Storage Rules 本地參考（firebase.json 引用） |
+
+> Rules 由 Firebase Console 手動維護，不透過 CLI deploy。快照更新後記得 push _memory。
+
 > `data/data.json` 和 `data/id_counters.json` 是版本控制的一部分，需一起 push。
+
+---
+
+## Firebase 設定檔說明
+
+### `firebase.json`
+
+Firebase CLI 設定檔，定義各服務的部署設定。**納入 git 版控**，不含敏感資料。
+
+```json
+{
+  "functions": { "source": "functions" },
+  "firestore": { "indexes": "firestore.indexes.json" },
+  "storage":   { "rules": "storage.rules" }
+}
+```
+
+| 欄位 | 說明 |
+|------|------|
+| `functions.source` | Cloud Functions 程式碼目錄（deploy 時使用） |
+| `firestore.indexes` | Firestore 複合索引定義檔路徑 |
+| `storage.rules` | Storage rules 路徑（實際規則由 Console 管理，此項備用） |
+
+### `firebase-messaging-sw.js`
+
+FCM（Firebase Cloud Messaging）推播的 Service Worker。**必須放在根目錄**，FCM SDK 會自動尋找此路徑。**納入 git 版控**。
+
+功能：
+- 頁面關閉時接收背景推播通知（`onBackgroundMessage`）
+- 點擊通知後開啟 `admin.html`（`notificationclick` 事件）
+
+> 檔案內含 Firebase apiKey 等設定，這些是公開識別碼（非私鑰），放在前端是正常做法。

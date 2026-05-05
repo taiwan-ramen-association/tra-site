@@ -12,9 +12,10 @@
 ## 關鍵路徑
 - 前台：`D:/ramen-finder-tmp/finder-beta.html`
 - 後台：`D:/ramen-finder-tmp/admin.html`
-- Firebase rules 快照（本機，不 git）：`D:/ramen-finder-tmp/_local/`
-  - Firestore：`_local/firestore.txt`
-  - Storage：`_local/storage.txt`
+- Firebase rules 快照（private git）：`D:/ramen-finder-tmp/_memory/rules/`
+  - Firestore：`_memory/rules/firestore.txt`
+  - Storage：`_memory/rules/storage.txt`
+  - Storage rules 本地參考：`_memory/rules/storage.rules`
 - 開發筆記（private repo）：`D:/ramen-finder-tmp/_memory/`
 
 ## 功能狀態（2026-05）
