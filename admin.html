@@ -1424,7 +1424,10 @@ async function scanOrphanPhotos() {
           orphans.push({ type: 'menu', label: f.ref.fullPath, refs: [f.ref], id: f.docId });
         }
       }
-    } catch(e) { console.warn('掃描 menus 失敗', e); }
+    } catch(e) {
+      console.warn('掃描 menus 失敗', e);
+      status.textContent = `⚠️ 掃描 menus 失敗：${e.message}`;
+    }
 
     // ── 掃描 reviews/ ────────────────────────────────────────────────────
     status.textContent = '掃描評論照片（reviews/）…';
@@ -1451,7 +1454,10 @@ async function scanOrphanPhotos() {
           }
         }
       }
-    } catch(e) { console.warn('掃描 reviews 失敗', e); }
+    } catch(e) {
+      console.warn('掃描 reviews 失敗', e);
+      status.textContent = `⚠️ 掃描 reviews 失敗：${e.message}`;
+    }
 
     // ── 結果 ──────────────────────────────────────────────────────────────
     _orphanItems = orphans;
