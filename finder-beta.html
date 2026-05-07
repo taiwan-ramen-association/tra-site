@@ -429,6 +429,8 @@
   .mnu-upload-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; background: var(--red); color: #fff; border: none; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity 0.15s; }
   .mnu-upload-btn:hover { opacity: 0.85; }
   .mnu-load-more { display: block; width: 100%; padding: 7px; background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--stone); font-size: 12px; cursor: pointer; font-family: inherit; margin-top: 6px; }
+  .mnu-del-btn { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%; font-size: 10px; line-height: 20px; text-align: center; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; transition: background 0.15s; }
+  .mnu-del-btn:hover { background: rgba(200,39,45,0.85); }
 
   .tab-placeholder {
     text-align: center; padding: 22px 0 10px;
@@ -2453,7 +2455,7 @@ function render() {
   list.innerHTML = filtered.map(renderCard).join('');
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.review-comment-form') || e.target.closest('.review-comments-more') || e.target.closest('.card-tab') || e.target.closest('.mnu-thumb')) return;
+      if (e.target.closest('a') || e.target.closest('.fav-btn') || e.target.closest('.stamp-btn') || e.target.closest('.queue-report-btn') || e.target.closest('.write-review-btn') || e.target.closest('.review-del-btn') || e.target.closest('.review-photo-thumb') || e.target.closest('.review-load-more') || e.target.closest('.review-comment-form') || e.target.closest('.review-comments-more') || e.target.closest('.card-tab') || e.target.closest('.mnu-thumb') || e.target.closest('.mnu-del-btn')) return;
       if (expandedCard && expandedCard !== card) expandedCard.classList.remove('expanded');
       card.classList.toggle('expanded');
       expandedCard = card.classList.contains('expanded') ? card : null;
@@ -3189,6 +3191,28 @@ async function loadShopMenu(shop, panel, append = false) {
       thumb.addEventListener('click', () =>
         openPhotoViewer(allMnuUrls, idx, { date: d.photoDate || '', uid: d.uid || '', authorName: d.displayName || '匿名' })
       );
+      const canDel = auth.currentUser && (auth.currentUser.uid === d.uid || currentUserRole === 'admin');
+      if (canDel) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'mnu-del-btn';
+        delBtn.title = '刪除';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', async e => {
+          e.stopPropagation();
+          if (!confirm('確定刪除這張菜單照片？')) return;
+          delBtn.disabled = true;
+          try {
+            await db.collection('menus').doc(doc.id).delete();
+            delete menuCache[shopId];
+            thumb.remove();
+            showStampToast('✅ 已刪除菜單照片');
+          } catch(err) {
+            showStampToast('❌ 刪除失敗');
+            delBtn.disabled = false;
+          }
+        });
+        thumb.appendChild(delBtn);
+      }
       grid.appendChild(thumb);
     });
     panel.appendChild(grid);

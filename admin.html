@@ -481,6 +481,53 @@
   <div class="reports-empty" id="reviewsEmpty" style="display:none">目前沒有評論</div>
 </div>
 
+<div class="reports-card" id="menusCard" style="display:none">
+  <h3>🍜 菜單管理</h3>
+  <p class="reports-desc">所有店家的菜單照片。管理員可刪除不當或過期內容（同步清除 Firestore 及 Storage）。</p>
+  <div class="reports-toolbar">
+    <span class="reports-count" id="menusCount">載入中…</span>
+    <input type="text" id="menusShopFilter" placeholder="依店名篩選…"
+      style="padding:5px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-family:inherit;background:var(--input-bg);color:var(--ink);flex:1;max-width:200px">
+    <button class="reports-reload-btn" id="menusReloadBtn">🔄 重新載入</button>
+  </div>
+  <table class="reports-table" id="menusTable" style="display:none">
+    <thead>
+      <tr>
+        <th style="width:120px">上傳時間</th>
+        <th style="width:130px">店家</th>
+        <th style="width:80px">拍攝日期</th>
+        <th style="width:72px">縮圖</th>
+        <th style="width:90px">上傳者</th>
+        <th style="width:52px"></th>
+      </tr>
+    </thead>
+    <tbody id="menusTbody"></tbody>
+  </table>
+  <div class="reports-empty" id="menusEmpty" style="display:none">目前沒有菜單照片</div>
+</div>
+
+<div class="reports-card" id="orphansCard" style="display:none">
+  <h3>🧹 孤兒照片清理</h3>
+  <p class="reports-desc">掃描 Storage 中沒有對應 Firestore 記錄的照片（評論或菜單刪除後遺留）。查詢可能需要數十秒，請稍候。</p>
+  <div class="reports-toolbar">
+    <button class="reports-reload-btn" id="orphanScanBtn">🔍 開始查詢</button>
+    <span class="reports-count" id="orphanStatus">尚未查詢</span>
+    <button class="reports-clear-btn" id="orphanDeleteAllBtn" disabled style="opacity:0.45;cursor:not-allowed">🗑 全部刪除</button>
+  </div>
+  <table class="reports-table" id="orphanTable" style="display:none">
+    <thead>
+      <tr>
+        <th style="width:70px">類型</th>
+        <th>Storage 路徑</th>
+        <th style="width:58px;text-align:center">檔案數</th>
+        <th style="width:52px"></th>
+      </tr>
+    </thead>
+    <tbody id="orphanTbody"></tbody>
+  </table>
+  <div class="reports-empty" id="orphanEmpty" style="display:none">✅ 未發現孤兒照片</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -497,8 +544,9 @@ const firebaseConfig = {
   appId: "1:66234065738:web:eb9fc4348a942da66ad7b3"
 };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const auth     = firebase.auth();
+const db       = firebase.firestore();
+const storage  = firebase.storage();
 const provider = new firebase.auth.GoogleAuthProvider();
 
 const ROLES = [
@@ -559,6 +607,8 @@ auth.onAuthStateChanged(async user => {
   loadFeatureFlags();
   loadIssueReports();
   loadAdminReviews();
+  loadAdminMenus();
+  document.getElementById('orphansCard').style.display = '';
   registerFcmToken(user.uid);
   renderFcmDevices(user.uid);
 });
@@ -1158,7 +1208,7 @@ async function loadAdminReviews(append = false) {
       const stars = '★'.repeat(d.rating || 0) + '☆'.repeat(5 - (d.rating || 0));
       const text  = escapeHtml((d.text || '').slice(0, 60)) + ((d.text || '').length > 60 ? '…' : '');
       const photoCount = (d.photos || []).length;
-      return `<tr data-docid="${escapeHtml(doc.id)}" data-shopid="${escapeHtml(d.shopId || '')}">
+      return `<tr data-docid="${escapeHtml(doc.id)}" data-shopid="${escapeHtml(d.shopId || '')}" data-photocount="${photoCount}">
         <td style="white-space:nowrap;font-size:11px;color:var(--stone)">${ts}</td>
         <td style="font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(d.shopId || '─')}</td>
         <td style="color:#f5a623;font-size:12px">${stars}</td>
@@ -1176,11 +1226,23 @@ async function loadAdminReviews(append = false) {
         if (!confirm('確定刪除此評論？')) return;
         btn.disabled = true;
         try {
-          const row   = btn.closest('tr');
-          const docId = btn.dataset.docid;
+          const row    = btn.closest('tr');
+          const docId  = btn.dataset.docid;
+          const shopId = row.dataset.shopid;
+          const photoCount = parseInt(row.dataset.photocount || '0', 10);
+          // 先刪 Storage 照片（失敗不中斷）
+          if (shopId && photoCount > 0) {
+            const storageTasks = [];
+            for (let i = 0; i < photoCount; i++) {
+              const base = `reviews/${shopId}/${docId}/photo_${i}`;
+              storageTasks.push(storage.ref(`${base}_orig.webp`).delete().catch(() => {}));
+              storageTasks.push(storage.ref(`${base}_thumb.webp`).delete().catch(() => {}));
+            }
+            await Promise.all(storageTasks);
+          }
           await db.collection('reviews').doc(docId).delete();
           row.remove();
-          showToast('✅ 已刪除評論（Storage 照片請至 Firebase Console 手動清理）');
+          showToast('✅ 已刪除評論');
         } catch(e) {
           showToast('❌ 刪除失敗：' + e.message);
           btn.disabled = false;
@@ -1197,6 +1259,300 @@ async function loadAdminReviews(append = false) {
 document.getElementById('reviewsReloadBtn').addEventListener('click', () => loadAdminReviews());
 document.getElementById('reviewsShopFilter').addEventListener('keydown', e => {
   if (e.key === 'Enter') loadAdminReviews();
+});
+
+// ── 菜單管理 ──────────────────────────────────────────────────────────────────
+let _menuLastDoc = null;
+
+async function loadAdminMenus(append = false) {
+  const card   = document.getElementById('menusCard');
+  const tbody  = document.getElementById('menusTbody');
+  const table  = document.getElementById('menusTable');
+  const empty  = document.getElementById('menusEmpty');
+  const count  = document.getElementById('menusCount');
+  const filter = document.getElementById('menusShopFilter').value.trim().toLowerCase();
+  card.style.display = '';
+
+  if (!append) {
+    _menuLastDoc = null;
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    empty.style.display = 'none';
+    count.textContent = '載入中…';
+  }
+
+  try {
+    let q = db.collection('menus').orderBy('createdAt', 'desc').limit(50);
+    if (_menuLastDoc) q = q.startAfter(_menuLastDoc);
+    const snap = await q.get();
+    const docs = filter
+      ? snap.docs.filter(d => (d.data().shopName || d.data().shopId || '').toLowerCase().includes(filter))
+      : snap.docs;
+
+    if (docs.length) _menuLastDoc = snap.docs[snap.docs.length - 1];
+
+    if (!append) {
+      const totalSnap = await db.collection('menus').get();
+      count.textContent = `共 ${totalSnap.size} 張`;
+    }
+
+    if (!docs.length && !append) {
+      empty.style.display = '';
+      return;
+    }
+    table.style.display = 'table';
+
+    tbody.insertAdjacentHTML('beforeend', docs.map(doc => {
+      const d  = doc.data();
+      const ts = d.createdAt
+        ? new Date(d.createdAt.seconds * 1000).toLocaleString('zh-TW', { hour12: false })
+        : '─';
+      const thumb = d.photo?.thumb || d.photo?.original || '';
+      const imgHtml = thumb
+        ? `<img src="${escapeHtml(thumb)}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;display:block">`
+        : '─';
+      return `<tr data-docid="${escapeHtml(doc.id)}" data-shopid="${escapeHtml(d.shopId || '')}">
+        <td style="white-space:nowrap;font-size:11px;color:var(--stone)">${ts}</td>
+        <td style="font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(d.shopName || d.shopId || '─')}</td>
+        <td style="font-size:12px;color:var(--stone)">${escapeHtml(d.photoDate || '─')}</td>
+        <td>${imgHtml}</td>
+        <td style="font-size:11px;color:var(--stone);max-width:80px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(d.displayName || '─')}</td>
+        <td><button class="report-del-btn" data-docid="${escapeHtml(doc.id)}">刪除</button></td>
+      </tr>`;
+    }).join(''));
+
+    // 刪除按鈕
+    tbody.querySelectorAll('.report-del-btn').forEach(btn => {
+      if (btn._bound) return; btn._bound = true;
+      btn.addEventListener('click', async () => {
+        if (!confirm('確定刪除這張菜單照片？')) return;
+        btn.disabled = true;
+        try {
+          const row    = btn.closest('tr');
+          const docId  = btn.dataset.docid;
+          const shopId = row.dataset.shopid;
+          // 先刪 Storage（失敗不中斷）
+          if (shopId) {
+            await storage.ref(`menus/${shopId}/${docId}.webp`).delete().catch(() => {});
+          }
+          await db.collection('menus').doc(docId).delete();
+          row.remove();
+          const remaining = tbody.querySelectorAll('tr').length;
+          count.textContent = `共 ${remaining} 張`;
+          if (remaining === 0) { table.style.display = 'none'; empty.style.display = ''; }
+          showToast('✅ 已刪除菜單照片');
+        } catch(e) {
+          showToast('❌ 刪除失敗：' + e.message);
+          btn.disabled = false;
+        }
+      });
+    });
+
+  } catch(e) {
+    count.textContent = '載入失敗';
+    showToast('❌ 載入菜單失敗：' + e.message);
+  }
+}
+
+document.getElementById('menusReloadBtn').addEventListener('click', () => loadAdminMenus());
+document.getElementById('menusShopFilter').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadAdminMenus();
+});
+
+// ── 孤兒照片清理 ───────────────────────────────────────────────────────────────
+let _orphanItems = []; // { type, label, refs: StorageReference[], id }
+
+// 批量確認 Firestore doc 是否存在，回傳 Set<id>（存在的）
+async function batchCheckExistence(collection, ids) {
+  if (!ids.length) return new Set();
+  const existing = new Set();
+  for (let i = 0; i < ids.length; i += 30) {
+    const chunk = ids.slice(i, i + 30);
+    try {
+      const snap = await db.collection(collection)
+        .where(firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
+      snap.docs.forEach(d => existing.add(d.id));
+    } catch(e) {
+      // fallback：逐筆查
+      for (const id of chunk) {
+        const s = await db.collection(collection).doc(id).get().catch(() => null);
+        if (s?.exists) existing.add(id);
+      }
+    }
+  }
+  return existing;
+}
+
+async function scanOrphanPhotos() {
+  const scanBtn   = document.getElementById('orphanScanBtn');
+  const status    = document.getElementById('orphanStatus');
+  const table     = document.getElementById('orphanTable');
+  const empty     = document.getElementById('orphanEmpty');
+  const tbody     = document.getElementById('orphanTbody');
+  const delAllBtn = document.getElementById('orphanDeleteAllBtn');
+
+  scanBtn.disabled = true;
+  scanBtn.textContent = '查詢中…';
+  status.textContent  = '初始化…';
+  table.style.display = 'none';
+  empty.style.display = 'none';
+  tbody.innerHTML     = '';
+  delAllBtn.disabled  = true;
+  delAllBtn.style.opacity = '0.45';
+  delAllBtn.style.cursor  = 'not-allowed';
+  delAllBtn.textContent   = '🗑 全部刪除';
+  _orphanItems = [];
+
+  const orphans = [];
+
+  try {
+    // ── 掃描 menus/ ──────────────────────────────────────────────────────
+    status.textContent = '掃描菜單照片（menus/）…';
+    try {
+      const shopDirs = (await storage.ref('menus').listAll()).prefixes;
+      const menuFiles = [];
+      for (const shopRef of shopDirs) {
+        const items = (await shopRef.listAll()).items;
+        for (const fileRef of items) {
+          const docId = fileRef.name.replace(/\.[^.]+$/, '');
+          menuFiles.push({ ref: fileRef, docId });
+        }
+      }
+      const existingIds = await batchCheckExistence('menus', menuFiles.map(f => f.docId));
+      for (const f of menuFiles) {
+        if (!existingIds.has(f.docId)) {
+          orphans.push({ type: 'menu', label: f.ref.fullPath, refs: [f.ref], id: f.docId });
+        }
+      }
+    } catch(e) { console.warn('掃描 menus 失敗', e); }
+
+    // ── 掃描 reviews/ ────────────────────────────────────────────────────
+    status.textContent = '掃描評論照片（reviews/）…';
+    try {
+      const shopDirs = (await storage.ref('reviews').listAll()).prefixes;
+      const reviewFolders = [];
+      for (const shopRef of shopDirs) {
+        const reviewDirs = (await shopRef.listAll()).prefixes;
+        for (const reviewRef of reviewDirs) {
+          reviewFolders.push({ ref: reviewRef, shopId: shopRef.name, reviewId: reviewRef.name });
+        }
+      }
+      const existingIds = await batchCheckExistence('reviews', reviewFolders.map(f => f.reviewId));
+      for (const folder of reviewFolders) {
+        if (!existingIds.has(folder.reviewId)) {
+          const files = (await folder.ref.listAll()).items;
+          if (files.length > 0) {
+            orphans.push({
+              type:  'review',
+              label: folder.ref.fullPath + '/',
+              refs:  files,
+              id:    folder.reviewId,
+            });
+          }
+        }
+      }
+    } catch(e) { console.warn('掃描 reviews 失敗', e); }
+
+    // ── 結果 ──────────────────────────────────────────────────────────────
+    _orphanItems = orphans;
+
+    if (!orphans.length) {
+      status.textContent = '✅ 未發現孤兒照片';
+      empty.style.display = '';
+    } else {
+      status.textContent = `發現 ${orphans.length} 筆孤兒`;
+      delAllBtn.disabled = false;
+      delAllBtn.style.opacity = '';
+      delAllBtn.style.cursor  = '';
+      delAllBtn.textContent = `🗑 全部刪除 (${orphans.length})`;
+      table.style.display = 'table';
+      renderOrphanRows();
+    }
+
+  } catch(e) {
+    status.textContent = '❌ 查詢失敗：' + e.message;
+    showToast('❌ 孤兒查詢失敗：' + e.message);
+  }
+
+  scanBtn.disabled = false;
+  scanBtn.textContent = '🔍 重新查詢';
+}
+
+function renderOrphanRows() {
+  const tbody     = document.getElementById('orphanTbody');
+  const delAllBtn = document.getElementById('orphanDeleteAllBtn');
+
+  tbody.innerHTML = _orphanItems
+    .map((item, idx) => item ? `
+      <tr data-idx="${idx}">
+        <td style="font-size:11px;white-space:nowrap">${item.type === 'menu' ? '🍜 菜單' : '💬 評論'}</td>
+        <td style="font-size:11px;word-break:break-all">${escapeHtml(item.label)}</td>
+        <td style="font-size:11px;text-align:center">${item.refs.length}</td>
+        <td><button class="report-del-btn orphan-del-btn" data-idx="${idx}">刪除</button></td>
+      </tr>` : ''
+    ).join('');
+
+  tbody.querySelectorAll('.orphan-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx  = parseInt(btn.dataset.idx, 10);
+      const item = _orphanItems[idx];
+      if (!item || !confirm(`確定刪除此孤兒照片？\n${item.label}`)) return;
+      btn.disabled = true;
+      try {
+        await Promise.all(item.refs.map(r => r.delete().catch(() => {})));
+        _orphanItems[idx] = null;
+        btn.closest('tr').remove();
+        const remaining = _orphanItems.filter(Boolean).length;
+        document.getElementById('orphanStatus').textContent = `剩餘 ${remaining} 筆孤兒`;
+        if (remaining === 0) {
+          document.getElementById('orphanTable').style.display = 'none';
+          document.getElementById('orphanEmpty').style.display = '';
+          delAllBtn.disabled = true;
+          delAllBtn.style.opacity = '0.45';
+          delAllBtn.style.cursor  = 'not-allowed';
+          delAllBtn.textContent   = '🗑 全部刪除';
+          document.getElementById('orphanStatus').textContent = '✅ 所有孤兒照片已清除';
+        } else {
+          delAllBtn.textContent = `🗑 全部刪除 (${remaining})`;
+        }
+        showToast('✅ 已刪除');
+      } catch(e) {
+        showToast('❌ 刪除失敗：' + e.message);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+document.getElementById('orphanScanBtn').addEventListener('click', scanOrphanPhotos);
+
+document.getElementById('orphanDeleteAllBtn').addEventListener('click', async () => {
+  const active = _orphanItems.filter(Boolean);
+  if (!active.length) return;
+  if (!confirm(`確定刪除全部 ${active.length} 筆孤兒照片？\n此操作無法復原。`)) return;
+
+  const delAllBtn = document.getElementById('orphanDeleteAllBtn');
+  const status    = document.getElementById('orphanStatus');
+  delAllBtn.disabled = true;
+  delAllBtn.textContent = '刪除中…';
+
+  let deleted = 0;
+  for (const item of active) {
+    try {
+      await Promise.all(item.refs.map(r => r.delete().catch(() => {})));
+      deleted++;
+    } catch(e) {}
+  }
+
+  _orphanItems = [];
+  document.getElementById('orphanTbody').innerHTML = '';
+  document.getElementById('orphanTable').style.display = 'none';
+  document.getElementById('orphanEmpty').style.display = '';
+  delAllBtn.style.opacity = '0.45';
+  delAllBtn.style.cursor  = 'not-allowed';
+  delAllBtn.textContent   = '🗑 全部刪除';
+  status.textContent = `✅ 已清除 ${deleted} 筆孤兒照片`;
+  showToast(`✅ 已清除 ${deleted} 筆孤兒照片`);
 });
 </script>
 </body>
